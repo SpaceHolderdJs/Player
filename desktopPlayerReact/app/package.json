@@ -1,0 +1,61 @@
+{
+  "name": "app",
+  "productName": "app",
+  "version": "1.0.0",
+  "description": "My Electron application description",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "electron-forge start",
+    "client": "npm run start --prefix client",
+    "dev": "concurrently \"npm run start\" \"npm run client \"",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "publish": "electron-forge publish",
+    "lint": "echo \"No linting configured\""
+  },
+  "keywords": [],
+  "author": {
+    "name": "Igor",
+    "email": "sergienko339@gmail.com"
+  },
+  "license": "MIT",
+  "config": {
+    "forge": {
+      "packagerConfig": {},
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "config": {
+            "name": "app"
+          }
+        },
+        {
+          "name": "@electron-forge/maker-zip",
+          "platforms": [
+            "darwin"
+          ]
+        },
+        {
+          "name": "@electron-forge/maker-deb",
+          "config": {}
+        },
+        {
+          "name": "@electron-forge/maker-rpm",
+          "config": {}
+        }
+      ]
+    }
+  },
+  "devDependencies": {
+    "electron": "^13.1.2",
+    "nodemon": "^2.0.7"
+  },
+  "dependencies": {
+    "concurrently": "^6.2.0",
+    "electron-squirrel-startup": "^1.0.0",
+    "express": "^4.17.1",
+    "materialize-css": "^1.0.0-rc.2",
+    "mongoose": "^5.12.13",
+    "node-dir": "^0.1.17"
+  }
+}

@@ -1,0 +1,154 @@
+@import url("https://fonts.googleapis.com/css2?family=Cabin&display=swap");
+@import "~materialize-css/dist/css/materialize.min.css";
+
+body {
+  background-color: black;
+  margin: 0;
+  padding: 0;
+  color: white;
+  font-family: "Cabin", sans-serif;
+}
+
+.App {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.Main {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.Main header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  height: 10vh;
+  padding: 10px;
+  justify-content: space-between;
+  animation: append 1s linear 1;
+}
+
+.Main header .r button {
+  margin-right: 10px;
+}
+
+input {
+  width: 45vw;
+  font-size: large;
+  margin: 1vw;
+  transition: 0.4s all !important;
+  background: none;
+  border: none;
+  border-bottom: 1px solid;
+  outline: none;
+  color: white;
+}
+
+button {
+  cursor: pointer;
+  border-radius: 10px;
+  transition: 0.4s all;
+}
+
+.form input:hover,
+.form button:hover {
+  transform: scale(1.05);
+}
+
+.form {
+  width: 100%;
+  padding: 2vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: 0.4s all;
+  animation: append 1s linear 1;
+  border-radius: 10px;
+}
+
+.form input {
+  width: 50% !important;
+  animation: blindingInput 5s linear infinite;
+}
+
+.form button {
+  width: 50% !important;
+  font-size: large;
+  transition: 0.4s all;
+  margin-top: 1vw;
+  transition: 0.4s all;
+  animation: blindingButton 5s linear infinite;
+}
+
+.Player {
+  width: 100%;
+  height: 50vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.Player .cntrl {
+  margin: 5px;
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 0;
+  }
+
+  20% {
+    opacity: 0.5;
+  }
+
+  30% {
+    opacity: 1;
+  }
+
+  60% {
+    opacity: 0.5;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes append {
+  0% {
+    opacity: 0;
+  }
+
+  50% {
+    transform: translateX(100px);
+    opacity: 0.3;
+  }
+
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.r {
+  display: flex;
+  align-items: center;
+}
+
+.c {
+  display: flex;
+  flex-direction: column;
+}
+
+.centr {
+  align-items: center;
+  justify-content: center;
+}
+
+.logo {
+  font-size: 3rem;
+}
