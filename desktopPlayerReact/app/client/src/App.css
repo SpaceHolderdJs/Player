@@ -85,7 +85,6 @@ button {
 
 .Player {
   width: 100%;
-  height: 50vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -96,6 +95,14 @@ button {
   margin: 5px;
 }
 
+.Playlist {
+  margin: 5px;
+  border: 1px solid teal;
+  border-radius: 10px;
+  padding: 10px;
+  width: 15vw;
+  flex-wrap: wrap;
+}
 @keyframes fadeOut {
   0% {
     opacity: 0;
