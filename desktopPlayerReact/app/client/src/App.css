@@ -235,3 +235,64 @@ canvas {
   background: none;
   transition: 0.4s all;
 }
+
+.duration {
+  width: 30vw !important;
+  margin: 1vw;
+}
+
+.range-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 40vw !important;
+}
+
+.marker {
+  width: 5px;
+  background-color: turquoise;
+  opacity: 0.7;
+  border: 1px solid teal;
+  border-radius: 10px;
+}
+
+.markers-wrapper {
+  max-height: min-content;
+  z-index: 0;
+  position: fixed;
+  top: 65vh;
+}
+
+h4 {
+  z-index: 2;
+}
+
+.section {
+  border: 2px solid teal;
+  border-radius: 10px;
+  height: 50vh;
+  margin: 1vh;
+  padding: 1vh;
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.folders-section {
+  width: 65vw;
+}
+
+.songs-section {
+  width: 30vw;
+}
+
+.crumb {
+  background-image: linear-gradient(90deg, turquoise, teal);
+  border-top-right-radius: 10px;
+  border-top-left-radius: 10px;
+  padding: 5px;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.crumb.active {
+  opacity: 1;
+}

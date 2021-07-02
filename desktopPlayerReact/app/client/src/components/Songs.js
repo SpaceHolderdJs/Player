@@ -1,16 +1,44 @@
 import React, { Component } from "react";
+import Section from "./Section";
 
 export default class Songs extends Component {
   constructor(props) {
     super(props);
-    this.state = { more: false };
+    this.state = { sections: [], active: "All tracks" };
 
-    this.handleMore = this.handleMore.bind(this);
     this.handlePlay = this.handlePlay.bind(this);
+    this.addSection = this.addSection.bind(this);
+    this.deleteSection = this.deleteSection.bind(this);
+    this.setActive = this.setActive.bind(this);
   }
 
-  handleMore() {
-    this.setState({ more: !this.state.more });
+  componentDidMount() {
+    const { songs, sects } = this.props;
+    const { sections } = this.state;
+
+    sections.push({ name: "All tracks", tracks: songs });
+
+    for (let dir in sects) {
+      sections.push({ name: dir, tracks: sects[dir] });
+    }
+
+    this.setState({
+      sections: sections,
+    });
+  }
+
+  setActive(e) {
+    this.setState({ active: e.target.textContent });
+  }
+
+  addSection(elms) {
+    const { sections } = this.state;
+    this.setState({ sections: sections.push(elms) });
+  }
+
+  deleteSection(name) {
+    const { sections } = this.state;
+    this.setState({ sections: sections.filter((e) => e.name !== name) });
   }
 
   handlePlay(e) {
@@ -22,45 +50,34 @@ export default class Songs extends Component {
   }
 
   render() {
-    const { songs, audio } = this.props;
-    const { more } = this.state;
+    const { sections, active } = this.state;
+    const { audio } = this.props;
 
-    if (more) {
-      return (
-        <div className="Songs c ">
-          {songs &&
-            songs.map((e, i) => (
-              <div key={i} className="song r">
-                <span>{e.name}</span>
-                <i
-                  onClick={this.handlePlay}
-                  data-path={e.path}
-                  data-name={e.name}
-                  className="material-icons">
-                  play_arrow
-                </i>
-                {audio &&
-                  audio.getAttribute("data-name") &&
-                  audio.getAttribute("data-name") === e.name && (
-                    <div className="r playing-wrapper">
-                      <div className="playing playing0"></div>
-                      <div className="playing playing1"></div>
-                      <div className="playing playing2"></div>
-                    </div>
-                  )}
+    const activeSection = sections.find((e) => e.name === active);
+
+    return (
+      <div className="Songs c ">
+        <div className="r">
+          {sections &&
+            sections.map((e) => (
+              <div
+                name={e.name}
+                onClick={this.setActive}
+                className={`crumb ${
+                  e.name === active && "active"
+                } waves-effect`}>
+                {e.name}
               </div>
             ))}
-          <button onClick={this.handleMore} className="btn waves-effect">
-            Close
-          </button>
         </div>
-      );
-    } else {
-      return (
-        <button onClick={this.handleMore} className="btn waves-effect">
-          All songs ({songs.length})
-        </button>
-      );
-    }
+        {activeSection && (
+          <Section
+            name={activeSection.name}
+            tracks={activeSection.tracks}
+            audio={audio}
+          />
+        )}
+      </div>
+    );
   }
 }

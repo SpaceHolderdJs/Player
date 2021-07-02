@@ -16,6 +16,8 @@ export default class Player extends Component {
       playing: true,
       dirs: {},
       files: [],
+      currentTime: 0,
+      duration: 0,
     };
 
     this.audio = document.querySelector("audio");
@@ -26,10 +28,29 @@ export default class Player extends Component {
     this.handlePlayControll = this.handlePlayControll.bind(this);
     this.handleNextControll = this.handleNextControll.bind(this);
     this.handlePrevControll = this.handlePrevControll.bind(this);
+    this.handleDurationChange = this.handleDurationChange.bind(this);
+
+    this.initAudio = this.initAudio.bind(this);
+
+    this.convertTime = this.convertTime.bind(this);
   }
 
   componentDidMount() {
     this.audio.onplay = this.handleAudioPlay;
+    this.audio.onloadedmetadata = () => {
+      this.setState({ duration: Math.floor(this.audio.duration) });
+    };
+
+    setInterval(() => {
+      if (this.duration) {
+        !audio.paused &&
+          this.setState({ currentTime: this.state.currentTime + 1 });
+        //  && (this.duration.value = +this.duration.value + 1);
+        console.log(this.duration, this.duration.value);
+      }
+    }, 1000);
+
+    // THREE
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
       75,
@@ -54,7 +75,6 @@ export default class Player extends Component {
     ballGeometry.computeFaceNormals();
     ballGeometry.computeVertexNormals();
     const material = new THREE.MeshStandardMaterial({
-      color: "white",
       wireframe: true,
       roughness: 0.3,
       metalness: 0.9,
@@ -72,6 +92,7 @@ export default class Player extends Component {
       flatShading: true,
       normalMap: tiles,
       blending: true,
+      refractionRatio: 10,
     });
 
     const ball = new THREE.Mesh(ballGeometry, ballMaterial);
@@ -157,7 +178,10 @@ export default class Player extends Component {
 
       if (!audio.paused) {
         analyser.getByteFrequencyData(freqs);
-
+        this.markers &&
+          [...this.markers.children].forEach(
+            (e, i) => (e.style.height = `${freqs[i] / 3}px`)
+          );
         plane.material.color.setRGB(freqs[9], freqs[4], freqs[12]);
 
         light.color.setRGB(freqs[9] / 100, freqs[4] / 100, freqs[12] / 100);
@@ -170,6 +194,34 @@ export default class Player extends Component {
       renderer.render(scene, camera);
     };
     animate();
+  }
+
+  handleDurationChange(e) {
+    this.setState({ currentTime: +e.target.value });
+    this.audio.currentTime = +e.target.value;
+  }
+
+  convertTime(val) {
+    const time = val.toFixed(0);
+    const res = {
+      h: Math.floor(time / 3600) === 0 ? "00" : Math.floor(time / 3600),
+      m:
+        Math.floor((time % 3600) / 60) === 0
+          ? "00"
+          : Math.floor((time % 3600) / 60),
+      s: Math.floor(val % 60) === 0 ? "00" : Math.floor(val % 60),
+    };
+
+    return [...Object.values(res)].filter((e) => e !== 0).join(":");
+  }
+
+  initAudio() {
+    if (this.duration) {
+      this.duration.value = 0;
+      this.duration.max = Math.floor(this.audio.duration);
+      this.duration.min = 0;
+      this.duration.step = 1;
+    }
   }
 
   handleAudioPlay() {
@@ -197,6 +249,10 @@ export default class Player extends Component {
       files: Array.from(new Set([...this.state.files, ...files])),
       current: files[0],
     });
+
+    console.log(this.state.dirs);
+
+    this.initAudio();
   }
 
   handlePlayControll() {
@@ -211,6 +267,8 @@ export default class Player extends Component {
     this.setState({ current: next });
     this.audio.src = next.path;
     this.audio.setAttribute("data-name", next.name);
+    this.setState({ currentTime: 0 });
+    this.initAudio();
     this.audio.play();
     this.setState({ playing: true });
   }
@@ -221,12 +279,20 @@ export default class Player extends Component {
     this.setState({ current: prev });
     this.audio.src = prev.path;
     this.audio.setAttribute("data-name", prev.name);
+    this.setState({ currentTime: 0 });
+    this.initAudio();
     this.audio.play();
     this.setState({ playing: true });
   }
 
   render() {
     const { files, current, playing, dirs } = this.state;
+
+    const markers = [];
+    for (let i = 0; i < 100; i++) {
+      markers.push(<div className="marker"></div>);
+    }
+
     if (files.length === 0) {
       return (
         <div className="Player">
@@ -246,34 +312,74 @@ export default class Player extends Component {
         </div>
       );
     } else {
+      const { currentTime, duration } = this.state;
       return (
         <div className="Player">
-          <p>Upload more audios</p>
-          <label htmlFor="file" className="btn waves-effect">
-            Upload
-          </label>
-          <input
-            id="file"
-            type="file"
-            webkitdirectory="true"
-            multiple
-            onChange={this.handleInitFiles}
-            placeholder="Select files"
-            hidden
-          />
-          <h4>Your audios</h4>
-          <Songs songs={files} audio={this.audio} />
-          <div className="r centr">
-            {Object.keys(dirs).map((e, i) => (
-              <Playlist
-                name={e}
-                audio={this.audio}
-                files={Object.values(dirs)[i]}
-              />
-            ))}
+          <div className="r">
+            <div className="c section songs-section">
+              <span>Your audios</span>
+              <Songs songs={files} sects={dirs} audio={this.audio} />
+            </div>
+            <div className="c section folders-section">
+              <div className="r">
+                <span>Folders</span>
+                <label htmlFor="file" className="btn waves-effect btn-small">
+                  Upload
+                </label>
+                <input
+                  id="file"
+                  type="file"
+                  webkitdirectory="true"
+                  multiple
+                  onChange={this.handleInitFiles}
+                  placeholder="Select files"
+                  hidden
+                />
+              </div>
+
+              <div className="r centr">
+                {Object.keys(dirs).map((e, i) => (
+                  <Playlist
+                    name={e}
+                    audio={this.audio}
+                    files={Object.values(dirs)[i]}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
           <div className="c centr controlls">
+            <div
+              className="r markers-wrapper"
+              ref={(e) => {
+                this.markers = e;
+              }}>
+              {markers}
+            </div>
             <h4>{current.name || "Unknown"}</h4>
+            <div className="centr r">
+              <p className="range-field waves-effect">
+                <span>
+                  {this.audio.currentTime
+                    ? this.convertTime(this.audio.currentTime)
+                    : "00:00"}
+                </span>
+                <input
+                  onChange={this.handleDurationChange}
+                  className="duration"
+                  type="range"
+                  value={currentTime}
+                  step={1}
+                  max={duration}
+                  ref={(e) => (this.duration = e)}
+                />
+                <span>
+                  {this.audio.duration
+                    ? this.convertTime(this.audio.duration)
+                    : "00:00"}
+                </span>
+              </p>
+            </div>
             <div className="r centr">
               <button
                 className="btn waves-effect cntrl"
