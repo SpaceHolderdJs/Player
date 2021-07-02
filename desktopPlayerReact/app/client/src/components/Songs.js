@@ -6,9 +6,6 @@ export default class Songs extends Component {
     super(props);
     this.state = { sections: [], active: "All tracks" };
 
-    this.handlePlay = this.handlePlay.bind(this);
-    this.addSection = this.addSection.bind(this);
-    this.deleteSection = this.deleteSection.bind(this);
     this.setActive = this.setActive.bind(this);
   }
 
@@ -17,10 +14,6 @@ export default class Songs extends Component {
     const { sections } = this.state;
 
     sections.push({ name: "All tracks", tracks: songs });
-
-    for (let dir in sects) {
-      sections.push({ name: dir, tracks: sects[dir] });
-    }
 
     this.setState({
       sections: sections,
@@ -31,27 +24,22 @@ export default class Songs extends Component {
     this.setState({ active: e.target.textContent });
   }
 
-  addSection(elms) {
-    const { sections } = this.state;
-    this.setState({ sections: sections.push(elms) });
-  }
-
-  deleteSection(name) {
-    const { sections } = this.state;
-    this.setState({ sections: sections.filter((e) => e.name !== name) });
-  }
-
-  handlePlay(e) {
-    const { audio, songs } = this.props;
-    audio.load();
-    audio.setAttribute("data-name", e.target.getAttribute("data-name"));
-    audio.src = e.target.getAttribute("data-path");
-    audio.play();
-  }
-
   render() {
     const { sections, active } = this.state;
-    const { audio } = this.props;
+    const { audio, sects } = this.props;
+
+    for (let dir in sects) {
+      sections.push({ name: dir, tracks: sects[dir] });
+    }
+
+    const pureSections = [];
+
+    sections.forEach(
+      (e) =>
+        !pureSections.find((el) => el.name === e.name) && pureSections.push(e)
+    );
+
+    console.log(pureSections);
 
     const activeSection = sections.find((e) => e.name === active);
 
@@ -59,7 +47,7 @@ export default class Songs extends Component {
       <div className="Songs c ">
         <div className="r">
           {sections &&
-            sections.map((e) => (
+            pureSections.map((e) => (
               <div
                 name={e.name}
                 onClick={this.setActive}

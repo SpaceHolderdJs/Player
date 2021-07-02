@@ -1,10 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
 import Audio from "./Audio";
 
 export default function Section(props) {
   const { name, tracks, audio } = props;
-
-  const [more, setMore] = useState(false);
 
   return (
     <div className="song-section">

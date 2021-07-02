@@ -296,3 +296,12 @@ h4 {
 .crumb.active {
   opacity: 1;
 }
+
+.song {
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.song:hover {
+  color: turquoise;
+}

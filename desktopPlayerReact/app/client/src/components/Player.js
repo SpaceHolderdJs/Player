@@ -313,6 +313,7 @@ export default class Player extends Component {
       );
     } else {
       const { currentTime, duration } = this.state;
+      console.log(dirs);
       return (
         <div className="Player">
           <div className="r">

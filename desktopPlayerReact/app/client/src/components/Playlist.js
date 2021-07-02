@@ -19,10 +19,14 @@ export default class Playlist extends Component {
     const { active } = this.state;
 
     if (!active) {
+      let size = 0;
+
+      files.forEach((e) => (size += e.size));
       return (
         <div className="Playlist c centr">
           <i className="material-icons large">audiotrack</i>
           <h6>{name}</h6>
+          <span>Total size: {(size / 1024 / 1024).toFixed(1)} mb</span>
           <span>Songs: {files.length}</span>
           <button className="btn" onClick={this.handleClick}>
             Open
