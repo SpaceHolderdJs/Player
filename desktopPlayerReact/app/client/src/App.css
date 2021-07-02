@@ -2,11 +2,11 @@
 @import "~materialize-css/dist/css/materialize.min.css";
 
 body {
-  background-color: black;
   margin: 0;
   padding: 0;
   color: white;
   font-family: "Cabin", sans-serif;
+  background-image: linear-gradient(40deg, black 60%, grey 40%);
 }
 
 .App {
@@ -102,7 +102,37 @@ button {
   padding: 10px;
   width: 15vw;
   flex-wrap: wrap;
+  background-color: rgba(0, 0, 0, 0.3);
 }
+
+.Playlist-full {
+  margin: 5px;
+  border: 1px solid teal;
+  border-radius: 10px;
+  padding: 10px;
+  height: 40vh;
+  overflow-y: auto;
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.Playlist-full::-webkit-scrollbar {
+  width: 5px;
+}
+
+.Playlist-full::-webkit-scrollbar-track {
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+}
+
+.Playlist-full::-webkit-scrollbar-thumb {
+  background-color: teal;
+  outline: 1px solid turquoise;
+  border-radius: 10px;
+}
+
+.controlls {
+  position: static;
+}
+
 @keyframes fadeOut {
   0% {
     opacity: 0;
@@ -141,6 +171,42 @@ button {
   }
 }
 
+@keyframes playing {
+  0% {
+    height: 20px;
+  }
+
+  50% {
+    height: 6px;
+  }
+
+  100% {
+    height: 20px;
+  }
+}
+
+.playing-wrapper {
+  margin-left: 10px;
+}
+
+.playing {
+  width: 5px;
+  height: 20px;
+  background-image: linear-gradient(180deg, teal, aqua);
+}
+
+.playing0 {
+  animation: playing 1.5s linear infinite;
+}
+
+.playing1 {
+  animation: playing 1s linear infinite;
+}
+
+.playing2 {
+  animation: playing 2s linear infinite;
+}
+
 .r {
   display: flex;
   align-items: center;
@@ -158,4 +224,14 @@ button {
 
 .logo {
   font-size: 3rem;
+}
+
+canvas {
+  position: absolute;
+  width: 100%;
+  top: 0%;
+  left: 0%;
+  z-index: -1;
+  background: none;
+  transition: 0.4s all;
 }

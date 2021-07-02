@@ -36,7 +36,7 @@ export default class Playlist extends Component {
           {files.map((e) => (
             <Audio audio={audio} file={e} />
           ))}
-          <button className="btn " onClick={this.handleClick}>
+          <button className="btn" onClick={this.handleClick}>
             Close
           </button>
         </div>

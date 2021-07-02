@@ -1,6 +1,13 @@
 import React, { Component } from "react";
 
+import * as THREE from "three";
+
+import texture from "../../src/tiles.png";
+
 import Playlist from "./Playlist";
+import Songs from "./Songs";
+
+console.log("__", texture);
 
 export default class Player extends Component {
   constructor(props) {
@@ -9,15 +16,171 @@ export default class Player extends Component {
       playing: true,
       dirs: {},
       files: [],
-      current: "",
     };
 
+    this.audio = document.querySelector("audio");
+
     this.handleInitFiles = this.handleInitFiles.bind(this);
-    this.handlePlaySong = this.handlePlaySong.bind(this);
+    this.handleAudioPlay = this.handleAudioPlay.bind(this);
     //controlls
     this.handlePlayControll = this.handlePlayControll.bind(this);
     this.handleNextControll = this.handleNextControll.bind(this);
     this.handlePrevControll = this.handlePrevControll.bind(this);
+  }
+
+  componentDidMount() {
+    this.audio.onplay = this.handleAudioPlay;
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(
+      75,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+    );
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    // renderer.setClearColor("rgb(38, 41, 38)");
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    //texturing
+
+    const textureLoader = new THREE.TextureLoader();
+
+    const tiles = textureLoader.load(`${texture}`);
+    console.log(tiles, texture);
+    tiles.anisotropy = 20;
+
+    const ballGeometry = new THREE.SphereBufferGeometry(4, 30, 30);
+    ballGeometry.computeFaceNormals();
+    ballGeometry.computeVertexNormals();
+    const material = new THREE.MeshStandardMaterial({
+      color: "white",
+      wireframe: true,
+      roughness: 0.3,
+      metalness: 0.9,
+      blending: true,
+    });
+
+    // renderer.physicallyCorrectLights = true;
+
+    const ballMaterial = new THREE.MeshStandardMaterial({
+      color: new THREE.Color("black"),
+      roughness: 0.5,
+      metalness: 0.9,
+      side: THREE.BackSide,
+      colorWrite: true,
+      flatShading: true,
+      normalMap: tiles,
+      blending: true,
+    });
+
+    const ball = new THREE.Mesh(ballGeometry, ballMaterial);
+    scene.add(ball);
+    ball.position.z = 0;
+
+    scene.background = new THREE.Color("black");
+
+    scene.fog = new THREE.FogExp2(new THREE.Color("rgb(38, 41, 38)"), 0.01);
+
+    const planeGeometry = new THREE.PlaneGeometry(550, 550, 199, 199);
+    const position = planeGeometry.attributes.position;
+
+    for (let i = 0; i < position.count; i++) {
+      const z = Math.random() * 10 * Math.sin(Math.random() / 2);
+      position.setZ(i, z);
+    }
+
+    camera.position.z = 10;
+
+    const light = new THREE.PointLight(0xffff, 10, 1000);
+
+    light.position.set(3, 3, -5);
+    scene.add(light);
+
+    const light2 = new THREE.PointLight("red", 10, 1000);
+
+    light2.position.set(-3, -3, -5);
+    scene.add(light2);
+
+    const plane = new THREE.Mesh(planeGeometry, material);
+    scene.add(plane);
+
+    plane.rotateX(90);
+    plane.position.setY(-30);
+
+    // listeners
+
+    window.addEventListener("mousemove", (e) => {
+      camera.position.x += (e.pageX - window.innerWidth / 2) / 50000;
+      camera.position.y += (e.pageY - window.innerHeight / 2) / 50000;
+    });
+
+    window.addEventListener("resize", function () {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    [...document.querySelectorAll("input")].forEach((e) =>
+      e.addEventListener("click", () => {
+        plane.material.color.setColorName("teal");
+        return setTimeout(() => {
+          plane.material.color.setColorName("white");
+        }, 3000);
+      })
+    );
+
+    //visualizer
+
+    const audioCtx = new AudioContext();
+    const analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 2048;
+    const audio = this.audio || document.querySelector("audio");
+
+    const source = audio ? audioCtx.createMediaElementSource(audio) : null;
+
+    source.connect(analyser);
+    analyser.connect(audioCtx.destination);
+    console.log("==", analyser.channelCount);
+    console.log(audio);
+
+    const freqs = new Uint8Array(analyser.frequencyBinCount);
+
+    const animate = () => {
+      requestAnimationFrame(animate);
+      ball.rotation.x += 0.005;
+      ball.rotation.y += 0.005;
+
+      plane.rotation.z += 0.003;
+      // plane.rotation.x += 0.003;
+
+      if (!audio.paused) {
+        analyser.getByteFrequencyData(freqs);
+
+        plane.material.color.setRGB(freqs[9], freqs[4], freqs[12]);
+
+        light.color.setRGB(freqs[9] / 100, freqs[4] / 100, freqs[12] / 100);
+        light2.color.setRGB(freqs[15] / 100, freqs[20] / 100, freqs[1] / 100);
+      }
+
+      const position = planeGeometry.attributes.position;
+      position.usage = THREE.DynamicDrawUsage;
+
+      renderer.render(scene, camera);
+    };
+    animate();
+  }
+
+  handleAudioPlay() {
+    const { files } = this.state;
+    const name = this.audio.getAttribute("data-name");
+    !this.audio.src && (this.audio.src = files[0].path);
+    console.log("__", this.audio, files);
+    name &&
+      this.setState({
+        current: files.find((e) => e.name === name),
+      });
   }
 
   handleInitFiles(e) {
@@ -31,16 +194,9 @@ export default class Player extends Component {
 
     this.setState({
       dirs: dirsWas,
-      files: [this.state.files, ...files],
+      files: Array.from(new Set([...this.state.files, ...files])),
       current: files[0],
     });
-  }
-
-  handlePlaySong(e) {
-    this.setState({ current: e.target.getAttribute("data-path") });
-    this.audio.src = e.target.getAttribute("data-path");
-    this.audio.play();
-    console.log(this.audio);
   }
 
   handlePlayControll() {
@@ -54,9 +210,9 @@ export default class Player extends Component {
     const next = files[files.indexOf(current) + 1] || files[0];
     this.setState({ current: next });
     this.audio.src = next.path;
+    this.audio.setAttribute("data-name", next.name);
     this.audio.play();
     this.setState({ playing: true });
-    console.log(this.audio);
   }
 
   handlePrevControll() {
@@ -64,14 +220,13 @@ export default class Player extends Component {
     const prev = files[files.indexOf(current) - 1] || files[files.length - 1];
     this.setState({ current: prev });
     this.audio.src = prev.path;
+    this.audio.setAttribute("data-name", prev.name);
     this.audio.play();
     this.setState({ playing: true });
-    console.log(this.audio);
   }
 
   render() {
     const { files, current, playing, dirs } = this.state;
-
     if (files.length === 0) {
       return (
         <div className="Player">
@@ -93,11 +248,6 @@ export default class Player extends Component {
     } else {
       return (
         <div className="Player">
-          <audio
-            src={files[0] ? files[0].path : ""}
-            controls
-            ref={(e) => (this.audio = e)}
-          />
           <p>Upload more audios</p>
           <label htmlFor="file" className="btn waves-effect">
             Upload
@@ -111,7 +261,8 @@ export default class Player extends Component {
             placeholder="Select files"
             hidden
           />
-          <h2>Your audios</h2>
+          <h4>Your audios</h4>
+          <Songs songs={files} audio={this.audio} />
           <div className="r centr">
             {Object.keys(dirs).map((e, i) => (
               <Playlist
@@ -121,8 +272,8 @@ export default class Player extends Component {
               />
             ))}
           </div>
-          <div className="c centr">
-            <h4>{current.name}</h4>
+          <div className="c centr controlls">
+            <h4>{current.name || "Unknown"}</h4>
             <div className="r centr">
               <button
                 className="btn waves-effect cntrl"

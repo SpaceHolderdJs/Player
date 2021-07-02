@@ -16,10 +16,22 @@ export default class Main extends Component {
     this.hadleLogout = this.hadleLogout.bind(this);
     this.handleModuleSwitch = this.handleModuleSwitch.bind(this);
     this.handleRegister = this.handleRegister.bind(this);
+    this.handleCheck = this.handleCheck.bind(this);
   }
 
   componentDidMount() {
-    // window.M.Toast.init();
+    // auth
+
+    localStorage.getItem("user") &&
+      this.setState({ user: JSON.parse(localStorage.getItem("user")) });
+
+    console.log(localStorage.getItem("user"));
+
+    // THREE
+  }
+
+  handleCheck(e) {
+    this.setState({ remember: e.target.checked });
   }
 
   handleInputChange(e) {
@@ -47,6 +59,7 @@ export default class Main extends Component {
         .then((user) => {
           console.log(user);
           !user.err && this.setState({ user: user._doc });
+          !user.err && localStorage.setItem("user", JSON.stringify(user._doc));
           user.err && window.M.toast({ html: user.msg });
         });
     } else {
@@ -56,6 +69,7 @@ export default class Main extends Component {
 
   hadleLogout() {
     this.setState({ user: null });
+    localStorage.removeItem("user");
   }
 
   handleRegister() {
@@ -116,6 +130,12 @@ export default class Main extends Component {
                 name="password"
                 onChange={this.handleInputChange}
               />
+              <p>
+                <label>
+                  <input onChange={this.handleCheck} type="checkbox" />
+                  <span>Keep me in</span>
+                </label>
+              </p>
               <button className="btn waves-effect" onClick={this.handleAuth}>
                 Submit
               </button>

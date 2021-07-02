@@ -10,6 +10,8 @@ export default class Audio extends Component {
 
   handleClick(e) {
     const { audio } = this.props;
+    audio.load();
+    audio.setAttribute("data-name", e.target.getAttribute("data-name"));
     audio.src = e.target.getAttribute("data-path");
     audio.play();
   }
@@ -19,9 +21,22 @@ export default class Audio extends Component {
 
     return (
       <div className="Audio r">
-        <p onClick={this.handleClick} data-path={file.path}>
+        <div
+          className="song r"
+          onClick={this.handleClick}
+          data-path={file.path}
+          data-name={file.name}>
           {file.name}
-        </p>
+          {audio &&
+            audio.getAttribute("data-name") &&
+            audio.getAttribute("data-name") === file.name && (
+              <div className="r playing-wrapper">
+                <div className="playing playing0"></div>
+                <div className="playing playing1"></div>
+                <div className="playing playing2"></div>
+              </div>
+            )}
+        </div>
       </div>
     );
   }
