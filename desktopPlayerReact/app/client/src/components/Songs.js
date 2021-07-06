@@ -47,8 +47,9 @@ export default class Songs extends Component {
       <div className="Songs c ">
         <div className="r">
           {sections &&
-            pureSections.map((e) => (
+            pureSections.map((e, i) => (
               <div
+                key={i}
                 name={e.name}
                 onClick={this.setActive}
                 className={`crumb ${

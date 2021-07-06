@@ -9,6 +9,10 @@ body {
   background-image: linear-gradient(40deg, black 60%, grey 40%);
 }
 
+input {
+  font-family: "Cabin", sans-serif;
+}
+
 .App {
   width: 100%;
   display: flex;
@@ -100,7 +104,7 @@ button {
   border: 1px solid teal;
   border-radius: 10px;
   padding: 10px;
-  width: 15vw;
+  width: 200px;
   flex-wrap: wrap;
   background-color: rgba(0, 0, 0, 0.3);
 }
@@ -110,7 +114,7 @@ button {
   border: 1px solid teal;
   border-radius: 10px;
   padding: 10px;
-  height: 40vh;
+  height: 30vh;
   overflow-y: auto;
   background-color: rgba(0, 0, 0, 0.3);
 }
@@ -304,4 +308,68 @@ h4 {
 
 .song:hover {
   color: turquoise;
+}
+
+label {
+  width: 10vw !important;
+}
+
+.label {
+  display: flex;
+  justify-self: center;
+  justify-content: center;
+  margin: auto;
+}
+
+.search-input-songs {
+  width: 60% !important;
+}
+
+.eqz-wrapper {
+  display: flex;
+  flex-direction: column;
+  transform: rotateZ(270deg);
+  width: fit-content;
+  height: fit-content;
+  margin-left: 5vw;
+}
+
+.eqz-wrapper input {
+  min-width: 30vh !important;
+}
+
+.eqz-wrapper .inp-wrapper {
+  width: 32vh !important;
+  justify-content: space-between;
+}
+
+.eqz-wrapper span {
+  transform: rotateZ(90deg);
+  display: flex;
+  margin-right: 1rem;
+  width: 1rem;
+  height: 2rem;
+}
+
+.eqz-wrapper .inp-subval {
+  margin-left: 1rem;
+  height: 1rem;
+}
+
+select {
+  background: none;
+  color: turquoise;
+  width: 20vh;
+  outline: none;
+  border: none;
+  margin: auto;
+  background-color: black;
+}
+
+option {
+  background: none;
+}
+
+.big-wrapper {
+  justify-content: space-around;
 }

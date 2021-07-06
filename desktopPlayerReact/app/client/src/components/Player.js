@@ -18,24 +18,43 @@ export default class Player extends Component {
       files: [],
       currentTime: 0,
       duration: 0,
+      sections: ["Folders", "Equalizer"],
+      activeSection: "Folders",
+      frequencies: [60, 170, 310, 600, 1000, 3000, 6000, 12000, 14000, 16000],
+      eqvValues: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      filterTypes: [
+        "peaking",
+        "notch",
+        "allpass",
+        "bandpass",
+        "highpass",
+        "lowpass",
+        "highshelf",
+        "lowshelf",
+      ],
     };
 
     this.audio = document.querySelector("audio");
 
     this.handleInitFiles = this.handleInitFiles.bind(this);
     this.handleAudioPlay = this.handleAudioPlay.bind(this);
+    this.setActive = this.setActive.bind(this);
     //controlls
     this.handlePlayControll = this.handlePlayControll.bind(this);
     this.handleNextControll = this.handleNextControll.bind(this);
     this.handlePrevControll = this.handlePrevControll.bind(this);
     this.handleDurationChange = this.handleDurationChange.bind(this);
-
+    //basics
     this.initAudio = this.initAudio.bind(this);
-
     this.convertTime = this.convertTime.bind(this);
+    //equalizer
+    this.handleFilterChange = this.handleFilterChange.bind(this);
+    this.handleSelectFilter = this.handleSelectFilter.bind(this);
   }
 
   componentDidMount() {
+    const { frequencies } = this.state;
+
     this.audio.onplay = this.handleAudioPlay;
     this.audio.onloadedmetadata = () => {
       this.setState({ duration: Math.floor(this.audio.duration) });
@@ -45,10 +64,10 @@ export default class Player extends Component {
       if (this.duration) {
         !audio.paused &&
           this.setState({ currentTime: this.state.currentTime + 1 });
-        //  && (this.duration.value = +this.duration.value + 1);
-        console.log(this.duration, this.duration.value);
       }
     }, 1000);
+
+    window.M.AutoInit();
 
     // THREE
     const scene = new THREE.Scene();
@@ -168,13 +187,43 @@ export default class Player extends Component {
 
     const freqs = new Uint8Array(analyser.frequencyBinCount);
 
+    //equalizer
+
+    const createFilter = (frequency) => {
+      const filter = audioCtx.createBiquadFilter();
+
+      filter.type = "peaking";
+      filter.frequency.value = frequency;
+      filter.Q.value = 1;
+      filter.gain.value = 0;
+
+      return filter;
+    };
+
+    const createFilters = () => {
+      const filters = frequencies.map(createFilter);
+
+      filters.reduce((prev, curr) => {
+        prev.connect(curr);
+        return curr;
+      });
+
+      return filters;
+    };
+
+    const filters = createFilters();
+
+    this.setState({ filters: filters });
+
+    source.connect(filters[0]);
+    filters[filters.length - 1].connect(audioCtx.destination);
+
     const animate = () => {
       requestAnimationFrame(animate);
       ball.rotation.x += 0.005;
       ball.rotation.y += 0.005;
 
       plane.rotation.z += 0.003;
-      // plane.rotation.x += 0.003;
 
       if (!audio.paused) {
         analyser.getByteFrequencyData(freqs);
@@ -193,12 +242,31 @@ export default class Player extends Component {
 
       renderer.render(scene, camera);
     };
+
     animate();
+  }
+
+  handleFilterChange(e) {
+    const { filters, eqvValues } = this.state;
+    const indx = +e.target.getAttribute("data-i");
+    filters[indx].gain.value = e.target.value;
+    eqvValues[indx] = e.target.value;
+    this.setState({ eqvValues });
+  }
+
+  handleSelectFilter(e) {
+    const { filters } = this.state;
+    filters.forEach((el) => (el.type = e.target.value));
   }
 
   handleDurationChange(e) {
     this.setState({ currentTime: +e.target.value });
     this.audio.currentTime = +e.target.value;
+  }
+
+  setActive(e) {
+    this.setState({ activeSection: e.target.textContent });
+    console.log(this.state.activeSection);
   }
 
   convertTime(val) {
@@ -312,8 +380,17 @@ export default class Player extends Component {
         </div>
       );
     } else {
-      const { currentTime, duration } = this.state;
-      console.log(dirs);
+      const {
+        currentTime,
+        duration,
+        sections,
+        activeSection,
+        filters,
+        frequencies,
+        eqvValues,
+        filterTypes,
+      } = this.state;
+
       return (
         <div className="Player">
           <div className="r">
@@ -323,30 +400,90 @@ export default class Player extends Component {
             </div>
             <div className="c section folders-section">
               <div className="r">
-                <span>Folders</span>
-                <label htmlFor="file" className="btn waves-effect btn-small">
-                  Upload
-                </label>
-                <input
-                  id="file"
-                  type="file"
-                  webkitdirectory="true"
-                  multiple
-                  onChange={this.handleInitFiles}
-                  placeholder="Select files"
-                  hidden
-                />
-              </div>
-
-              <div className="r centr">
-                {Object.keys(dirs).map((e, i) => (
-                  <Playlist
+                {sections.map((e, i) => (
+                  <div
+                    key={i}
+                    className={`crumb c centr waves-effect ${
+                      activeSection === e && "active"
+                    }`}
                     name={e}
-                    audio={this.audio}
-                    files={Object.values(dirs)[i]}
-                  />
+                    onClick={this.setActive}>
+                    {e[0].toUpperCase() + e.slice(1, e.length)}
+                  </div>
                 ))}
               </div>
+              {activeSection === "Folders" && (
+                <div>
+                  <div className="r centr">
+                    {Object.keys(dirs).map((e, i) => (
+                      <Playlist
+                        name={e}
+                        audio={this.audio}
+                        files={Object.values(dirs)[i]}
+                      />
+                    ))}
+                  </div>
+                  <label
+                    htmlFor="file"
+                    className="btn waves-effect btn-small label">
+                    Upload
+                  </label>
+                  <input
+                    id="file"
+                    type="file"
+                    webkitdirectory="true"
+                    multiple
+                    onChange={this.handleInitFiles}
+                    placeholder="Select files"
+                    hidden
+                  />
+                </div>
+              )}
+
+              {activeSection === "Equalizer" && (
+                <div className="r big-wrapper">
+                  <div className="eqz-wrapper">
+                    {filters &&
+                      filters.map((e, i) => (
+                        <div key={i} className="range-field r inp-wrapper">
+                          <span className="inp-value">
+                            {frequencies[i].toString().length > 3
+                              ? frequencies[i]
+                                  .toString()
+                                  .slice(
+                                    0,
+                                    Math.trunc(
+                                      frequencies[i].toString().length / 2.5
+                                    )
+                                  ) + "k"
+                              : frequencies[i]}
+                          </span>
+                          <input
+                            type="range"
+                            min="-10"
+                            max="10"
+                            value={eqvValues[i]}
+                            step="0.5"
+                            data-i={i}
+                            onChange={this.handleFilterChange}
+                          />
+                          <span className="inp-subval">{eqvValues[i]}</span>
+                        </div>
+                      ))}
+                  </div>
+                  <div className="c">
+                    <select
+                      className="browser-default"
+                      onChange={this.handleSelectFilter}>
+                      {filterTypes.map((e, i) => (
+                        <option key={i} value={e}>
+                          {e}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <div className="c centr controlls">

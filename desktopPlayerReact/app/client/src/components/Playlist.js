@@ -28,7 +28,9 @@ export default class Playlist extends Component {
           <h6>{name}</h6>
           <span>Total size: {(size / 1024 / 1024).toFixed(1)} mb</span>
           <span>Songs: {files.length}</span>
-          <button className="btn" onClick={this.handleClick}>
+          <button
+            className="btn btn-small waves-effect"
+            onClick={this.handleClick}>
             Open
           </button>
         </div>
@@ -40,7 +42,9 @@ export default class Playlist extends Component {
           {files.map((e) => (
             <Audio audio={audio} file={e} />
           ))}
-          <button className="btn" onClick={this.handleClick}>
+          <button
+            className="btn btn-small waves-effect"
+            onClick={this.handleClick}>
             Close
           </button>
         </div>
