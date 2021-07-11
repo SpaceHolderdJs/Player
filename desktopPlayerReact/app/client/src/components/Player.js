@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import { Line } from "react-chartjs-2";
 
 import * as THREE from "three";
 
@@ -61,11 +62,13 @@ export default class Player extends Component {
     };
 
     setInterval(() => {
-      if (this.duration) {
-        !audio.paused &&
-          this.setState({ currentTime: this.state.currentTime + 1 });
+      if (this.duration && !audio.paused) {
+        console.log(this.audio.currentTime.toFixed(0));
+        this.timer.textContent = this.convertTime(this.audio.currentTime);
       }
-    }, 1000);
+      this.duration &&
+        (this.duration.value = this.audio.currentTime.toFixed(0));
+    }, 50);
 
     window.M.AutoInit();
 
@@ -233,6 +236,13 @@ export default class Player extends Component {
           );
         plane.material.color.setRGB(freqs[9], freqs[4], freqs[12]);
 
+        if (this.charts) {
+          const newData = freqs.filter((e, i) => i % 6 === 0).slice(0, 9);
+          newData.forEach((e, i) => (this.charts.data.datasets[0].data[i] = e));
+
+          this.charts.update("active");
+        }
+
         light.color.setRGB(freqs[9] / 100, freqs[4] / 100, freqs[12] / 100);
         light2.color.setRGB(freqs[15] / 100, freqs[20] / 100, freqs[1] / 100);
       }
@@ -260,7 +270,6 @@ export default class Player extends Component {
   }
 
   handleDurationChange(e) {
-    this.setState({ currentTime: +e.target.value });
     this.audio.currentTime = +e.target.value;
   }
 
@@ -381,7 +390,6 @@ export default class Player extends Component {
       );
     } else {
       const {
-        currentTime,
         duration,
         sections,
         activeSection,
@@ -481,6 +489,40 @@ export default class Player extends Component {
                         </option>
                       ))}
                     </select>
+                    <Line
+                      ref={(e) => (this.charts = e)}
+                      data={{
+                        labels: frequencies,
+                        datasets: [
+                          {
+                            label: "Dynamic frequinses",
+                            fill: true,
+                            borderColor: "teal",
+                            backgroundColor: "aqua",
+                            data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                            borderWidth: 1,
+                          },
+                        ],
+                      }}
+                      height={70}
+                      width={150}
+                      options={{
+                        responsive: true,
+                        layout: {
+                          padding: 10,
+                        },
+                        scales: {
+                          yAxes: [
+                            {
+                              ticks: {
+                                beginAtZero: false,
+                              },
+                            },
+                          ],
+                        },
+                        maintainAspectRatio: true,
+                      }}
+                    />
                   </div>
                 </div>
               )}
@@ -497,7 +539,10 @@ export default class Player extends Component {
             <h4>{current.name || "Unknown"}</h4>
             <div className="centr r">
               <p className="range-field waves-effect">
-                <span>
+                <span
+                  ref={(e) => {
+                    this.timer = e;
+                  }}>
                   {this.audio.currentTime
                     ? this.convertTime(this.audio.currentTime)
                     : "00:00"}
@@ -506,7 +551,7 @@ export default class Player extends Component {
                   onChange={this.handleDurationChange}
                   className="duration"
                   type="range"
-                  value={currentTime}
+                  value={0}
                   step={1}
                   max={duration}
                   ref={(e) => (this.duration = e)}
