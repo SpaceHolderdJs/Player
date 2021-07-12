@@ -26,7 +26,7 @@ export default class Songs extends Component {
 
   render() {
     const { sections, active } = this.state;
-    const { audio, sects } = this.props;
+    const { audio, sects, setPlaying } = this.props;
 
     for (let dir in sects) {
       sections.push({ name: dir, tracks: sects[dir] });
@@ -64,6 +64,7 @@ export default class Songs extends Component {
             name={activeSection.name}
             tracks={activeSection.tracks}
             audio={audio}
+            setPlaying={setPlaying}
           />
         )}
       </div>

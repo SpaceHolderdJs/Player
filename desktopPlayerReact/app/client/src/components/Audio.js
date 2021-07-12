@@ -9,11 +9,12 @@ export default class Audio extends Component {
   }
 
   handleClick(e) {
-    const { audio } = this.props;
+    const { audio, setPlaying } = this.props;
     audio.load();
     audio.setAttribute("data-name", e.target.getAttribute("data-name"));
     audio.src = e.target.getAttribute("data-path");
     audio.play();
+    setPlaying(false);
   }
 
   render() {

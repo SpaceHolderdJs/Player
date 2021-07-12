@@ -48,6 +48,7 @@ export default class Player extends Component {
     //basics
     this.initAudio = this.initAudio.bind(this);
     this.convertTime = this.convertTime.bind(this);
+    this.setPlaying = this.setPlaying.bind(this);
     //equalizer
     this.handleFilterChange = this.handleFilterChange.bind(this);
     this.handleSelectFilter = this.handleSelectFilter.bind(this);
@@ -256,6 +257,10 @@ export default class Player extends Component {
     animate();
   }
 
+  setPlaying(val) {
+    this.setState({ playing: val });
+  }
+
   handleFilterChange(e) {
     const { filters, eqvValues } = this.state;
     const indx = +e.target.getAttribute("data-i");
@@ -335,7 +340,7 @@ export default class Player extends Component {
   handlePlayControll() {
     const { playing } = this.state;
     playing ? this.audio.play() : this.audio.pause();
-    this.setState({ playing: !this.state.playing });
+    this.setState({ playing: this.audio.paused });
   }
 
   handleNextControll() {
@@ -347,7 +352,7 @@ export default class Player extends Component {
     this.setState({ currentTime: 0 });
     this.initAudio();
     this.audio.play();
-    this.setState({ playing: true });
+    this.setState({ playing: this.audio.paused });
   }
 
   handlePrevControll() {
@@ -359,7 +364,7 @@ export default class Player extends Component {
     this.setState({ currentTime: 0 });
     this.initAudio();
     this.audio.play();
-    this.setState({ playing: true });
+    this.setState({ playing: this.audio.paused });
   }
 
   render() {
@@ -404,7 +409,12 @@ export default class Player extends Component {
           <div className="r">
             <div className="c section songs-section">
               <span>Your audios</span>
-              <Songs songs={files} sects={dirs} audio={this.audio} />
+              <Songs
+                songs={files}
+                sects={dirs}
+                audio={this.audio}
+                setPlaying={this.setPlaying}
+              />
             </div>
             <div className="c section folders-section">
               <div className="r">
@@ -428,6 +438,7 @@ export default class Player extends Component {
                         name={e}
                         audio={this.audio}
                         files={Object.values(dirs)[i]}
+                        setPlaying={this.setPlaying}
                       />
                     ))}
                   </div>
