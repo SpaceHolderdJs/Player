@@ -7,6 +7,7 @@ import texture from "../../src/tiles.png";
 
 import Playlist from "./Playlist";
 import Songs from "./Songs";
+import TrackInfo from "./TrackInfo";
 
 console.log("__", texture);
 
@@ -19,7 +20,7 @@ export default class Player extends Component {
       files: [],
       currentTime: 0,
       duration: 0,
-      sections: ["Folders", "Equalizer"],
+      sections: ["Folders", "Equalizer", "TrackInfo"],
       activeSection: "Folders",
       frequencies: [60, 170, 310, 600, 1000, 3000, 6000, 12000, 14000, 16000],
       eqvValues: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -34,8 +35,6 @@ export default class Player extends Component {
         "lowshelf",
       ],
     };
-
-    this.audio = document.querySelector("audio");
 
     this.handleInitFiles = this.handleInitFiles.bind(this);
     this.handleAudioPlay = this.handleAudioPlay.bind(this);
@@ -369,233 +368,244 @@ export default class Player extends Component {
 
   render() {
     const { files, current, playing, dirs } = this.state;
+    const {
+      duration,
+      sections,
+      activeSection,
+      filters,
+      frequencies,
+      eqvValues,
+      filterTypes,
+    } = this.state;
 
     const markers = [];
     for (let i = 0; i < 100; i++) {
       markers.push(<div className="marker"></div>);
     }
 
-    if (files.length === 0) {
-      return (
-        <div className="Player">
-          <p>Upload audios to start</p>
-          <label htmlFor="file" className="btn waves-effect">
-            Upload
-          </label>
-          <input
-            id="file"
-            type="file"
-            webkitdirectory="true"
-            multiple
-            onChange={this.handleInitFiles}
-            placeholder="Select files"
-            hidden
-          />
-        </div>
-      );
-    } else {
-      const {
-        duration,
-        sections,
-        activeSection,
-        filters,
-        frequencies,
-        eqvValues,
-        filterTypes,
-      } = this.state;
+    return (
+      <div className="Player">
+        <audio ref={(e) => (this.audio = e)}></audio>
+        {files.length === 0 && (
+          <div className="c centr" style={{ margin: "25vh" }}>
+            <p>Upload audios to start</p>
+            <i
+              style={{ color: "rgba(256, 256, 256, 0.8)" }}
+              className="material-icons large">
+              folder
+            </i>
+            <label htmlFor="file" className="btn waves-effect">
+              Upload
+            </label>
+            <input
+              id="file"
+              type="file"
+              webkitdirectory="true"
+              multiple
+              onChange={this.handleInitFiles}
+              placeholder="Select files"
+              hidden
+            />
+          </div>
+        )}
 
-      return (
-        <div className="Player">
-          <div className="r">
-            <div className="c section songs-section">
-              <span>Your audios</span>
-              <Songs
-                songs={files}
-                sects={dirs}
-                audio={this.audio}
-                setPlaying={this.setPlaying}
-              />
-            </div>
-            <div className="c section folders-section">
-              <div className="r">
-                {sections.map((e, i) => (
-                  <div
-                    key={i}
-                    className={`crumb c centr waves-effect ${
-                      activeSection === e && "active"
-                    }`}
-                    name={e}
-                    onClick={this.setActive}>
-                    {e[0].toUpperCase() + e.slice(1, e.length)}
-                  </div>
-                ))}
+        {files.length !== 0 && (
+          <div>
+            <div className="r">
+              <div className="c section songs-section">
+                <span>Your audios</span>
+                <Songs
+                  songs={files}
+                  sects={dirs}
+                  audio={this.audio}
+                  setPlaying={this.setPlaying}
+                />
               </div>
-              {activeSection === "Folders" && (
-                <div>
-                  <div className="r centr">
-                    {Object.keys(dirs).map((e, i) => (
-                      <Playlist
-                        name={e}
-                        audio={this.audio}
-                        files={Object.values(dirs)[i]}
-                        setPlaying={this.setPlaying}
-                      />
-                    ))}
-                  </div>
-                  <label
-                    htmlFor="file"
-                    className="btn waves-effect btn-small label">
-                    Upload
-                  </label>
-                  <input
-                    id="file"
-                    type="file"
-                    webkitdirectory="true"
-                    multiple
-                    onChange={this.handleInitFiles}
-                    placeholder="Select files"
-                    hidden
-                  />
+              <div className="c section folders-section">
+                <div className="r">
+                  {sections.map((e, i) => (
+                    <div
+                      key={i}
+                      className={`crumb c centr waves-effect ${
+                        activeSection === e && "active"
+                      }`}
+                      name={e}
+                      onClick={this.setActive}>
+                      {e[0].toUpperCase() + e.slice(1, e.length)}
+                    </div>
+                  ))}
                 </div>
-              )}
-
-              {activeSection === "Equalizer" && (
-                <div className="r big-wrapper">
-                  <div className="eqz-wrapper">
-                    {filters &&
-                      filters.map((e, i) => (
-                        <div key={i} className="range-field r inp-wrapper">
-                          <span className="inp-value">
-                            {frequencies[i].toString().length > 3
-                              ? frequencies[i]
-                                  .toString()
-                                  .slice(
-                                    0,
-                                    Math.trunc(
-                                      frequencies[i].toString().length / 2.5
-                                    )
-                                  ) + "k"
-                              : frequencies[i]}
-                          </span>
-                          <input
-                            type="range"
-                            min="-10"
-                            max="10"
-                            value={eqvValues[i]}
-                            step="0.5"
-                            data-i={i}
-                            onChange={this.handleFilterChange}
-                          />
-                          <span className="inp-subval">{eqvValues[i]}</span>
-                        </div>
+                {activeSection === "Folders" && (
+                  <div>
+                    <div className="r centr">
+                      {Object.keys(dirs).map((e, i) => (
+                        <Playlist
+                          name={e}
+                          audio={this.audio}
+                          files={Object.values(dirs)[i]}
+                          setPlaying={this.setPlaying}
+                        />
                       ))}
-                  </div>
-                  <div className="c">
-                    <select
-                      className="browser-default"
-                      onChange={this.handleSelectFilter}>
-                      {filterTypes.map((e, i) => (
-                        <option key={i} value={e}>
-                          {e}
-                        </option>
-                      ))}
-                    </select>
-                    <Line
-                      ref={(e) => (this.charts = e)}
-                      data={{
-                        labels: frequencies,
-                        datasets: [
-                          {
-                            label: "Dynamic frequinses",
-                            fill: true,
-                            borderColor: "teal",
-                            backgroundColor: "aqua",
-                            data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                            borderWidth: 1,
-                          },
-                        ],
-                      }}
-                      height={70}
-                      width={150}
-                      options={{
-                        responsive: true,
-                        layout: {
-                          padding: 10,
-                        },
-                        scales: {
-                          yAxes: [
-                            {
-                              ticks: {
-                                beginAtZero: false,
-                              },
-                            },
-                          ],
-                        },
-                        maintainAspectRatio: true,
-                      }}
+                    </div>
+                    <label
+                      htmlFor="file"
+                      className="btn waves-effect btn-small label">
+                      Upload
+                    </label>
+                    <input
+                      id="file"
+                      type="file"
+                      webkitdirectory="true"
+                      multiple
+                      onChange={this.handleInitFiles}
+                      placeholder="Select files"
+                      hidden
                     />
                   </div>
-                </div>
-              )}
+                )}
+
+                {activeSection === "Equalizer" && (
+                  <div className="r big-wrapper">
+                    <div className="eqz-wrapper">
+                      {filters &&
+                        filters.map((e, i) => (
+                          <div key={i} className="range-field r inp-wrapper">
+                            <span className="inp-value">
+                              {frequencies[i].toString().length > 3
+                                ? frequencies[i]
+                                    .toString()
+                                    .slice(
+                                      0,
+                                      Math.trunc(
+                                        frequencies[i].toString().length / 2.5
+                                      )
+                                    ) + "k"
+                                : frequencies[i]}
+                            </span>
+                            <input
+                              type="range"
+                              min="-10"
+                              max="10"
+                              value={eqvValues[i]}
+                              step="0.5"
+                              data-i={i}
+                              onChange={this.handleFilterChange}
+                            />
+                            <span className="inp-subval">{eqvValues[i]}</span>
+                          </div>
+                        ))}
+                    </div>
+                    <div className="c">
+                      <select
+                        className="browser-default"
+                        onChange={this.handleSelectFilter}>
+                        {filterTypes.map((e, i) => (
+                          <option key={i} value={e}>
+                            {e}
+                          </option>
+                        ))}
+                      </select>
+                      <Line
+                        ref={(e) => (this.charts = e)}
+                        data={{
+                          labels: frequencies,
+                          datasets: [
+                            {
+                              label: "Dynamic frequinses",
+                              fill: true,
+                              borderColor: "teal",
+                              backgroundColor: "aqua",
+                              data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                              borderWidth: 1,
+                            },
+                          ],
+                        }}
+                        height={70}
+                        width={150}
+                        options={{
+                          responsive: true,
+                          layout: {
+                            padding: 10,
+                          },
+                          scales: {
+                            yAxes: [
+                              {
+                                ticks: {
+                                  beginAtZero: false,
+                                },
+                              },
+                            ],
+                          },
+                          maintainAspectRatio: true,
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {activeSection === "TrackInfo" && current && (
+                  <TrackInfo songName={current.name} />
+                )}
+              </div>
+            </div>
+            <div className="c centr controlls">
+              <div
+                className="r markers-wrapper"
+                ref={(e) => {
+                  this.markers = e;
+                }}>
+                {markers}
+              </div>
+              <h4>{current.name || "Unknown"}</h4>
+              <div className="centr r">
+                <p className="range-field waves-effect">
+                  <span
+                    ref={(e) => {
+                      this.timer = e;
+                    }}>
+                    {this.audio.currentTime
+                      ? this.convertTime(this.audio.currentTime)
+                      : "00:00"}
+                  </span>
+                  <input
+                    onChange={this.handleDurationChange}
+                    className="duration"
+                    type="range"
+                    value={0}
+                    step={1}
+                    max={duration}
+                    ref={(e) => (this.duration = e)}
+                  />
+                  <span>
+                    {this.audio.duration
+                      ? this.convertTime(this.audio.duration)
+                      : "00:00"}
+                  </span>
+                </p>
+              </div>
+              <div className="r centr">
+                <button
+                  className="btn waves-effect cntrl"
+                  onClick={this.handlePrevControll}>
+                  <i className="material-icons">fast_rewind</i>
+                </button>
+                <button
+                  className="btn waves-effect cntrl"
+                  onClick={this.handlePlayControll}>
+                  <i className="material-icons">
+                    {playing ? "play_arrow" : "pause"}
+                  </i>
+                </button>
+                <button
+                  className="btn waves-effect cntrl"
+                  onClick={this.handleNextControll}>
+                  <i className="material-icons">fast_forward</i>
+                </button>
+              </div>
             </div>
           </div>
-          <div className="c centr controlls">
-            <div
-              className="r markers-wrapper"
-              ref={(e) => {
-                this.markers = e;
-              }}>
-              {markers}
-            </div>
-            <h4>{current.name || "Unknown"}</h4>
-            <div className="centr r">
-              <p className="range-field waves-effect">
-                <span
-                  ref={(e) => {
-                    this.timer = e;
-                  }}>
-                  {this.audio.currentTime
-                    ? this.convertTime(this.audio.currentTime)
-                    : "00:00"}
-                </span>
-                <input
-                  onChange={this.handleDurationChange}
-                  className="duration"
-                  type="range"
-                  value={0}
-                  step={1}
-                  max={duration}
-                  ref={(e) => (this.duration = e)}
-                />
-                <span>
-                  {this.audio.duration
-                    ? this.convertTime(this.audio.duration)
-                    : "00:00"}
-                </span>
-              </p>
-            </div>
-            <div className="r centr">
-              <button
-                className="btn waves-effect cntrl"
-                onClick={this.handlePrevControll}>
-                <i className="material-icons">fast_rewind</i>
-              </button>
-              <button
-                className="btn waves-effect cntrl"
-                onClick={this.handlePlayControll}>
-                <i className="material-icons">
-                  {playing ? "play_arrow" : "pause"}
-                </i>
-              </button>
-              <button
-                className="btn waves-effect cntrl"
-                onClick={this.handleNextControll}>
-                <i className="material-icons">fast_forward</i>
-              </button>
-            </div>
-          </div>
-        </div>
-      );
-    }
+        )}
+      </div>
+    );
   }
 }

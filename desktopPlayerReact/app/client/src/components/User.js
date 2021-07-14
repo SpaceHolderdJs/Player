@@ -19,9 +19,9 @@ export default class User extends Component {
     return (
       <div>
         {user && (
-          <h1 onClick={this.handleMore}>
+          <h5 onClick={this.handleMore}>
             {user.name} {user.surname}
-          </h1>
+          </h5>
         )}
         {more && <h3>Some more info ...</h3>}
       </div>

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 
 export default function TrackInfo(props) {
+  const { songName } = props;
   const [info, setInfo] = useState();
 
   useEffect(() => {
+    console.log("___", songName);
     if (!info) {
       fetch(
-        "https://shazam.p.rapidapi.com/search?term=kiss%20the%20rain&locale=en-US&offset=0&limit=5",
+        `https://shazam.p.rapidapi.com/search?term=${songName}&locale=en-US&offset=0&limit=5`,
         {
           method: "GET",
           headers: {
@@ -16,18 +18,18 @@ export default function TrackInfo(props) {
           },
         }
       )
-        .then((response) => response.json)
+        .then((response) => response.json())
         .then((info) => {
           setInfo(info);
-          if (info && Object.keys(info).length > 0) {
-            fetch();
-          }
+          // if (info && Object.keys(info).length > 0) {
+          //   fetch();
+          // }
         });
     }
   });
 
   return (
-    <div className="section">
+    <div className="r centr">
       {!info && (
         <div className="c centr">
           <span>Loading...</span>
@@ -39,13 +41,33 @@ export default function TrackInfo(props) {
       {info && Object.keys(info).length === 0 && (
         <div className="c centr">
           <span>No info for current track</span>
-          <i className="material-icons large">cloud-off</i>
+          <i className="material-icons large">cloud_off</i>
         </div>
       )}
-      {info && Object.keys(info).length < 0 && (
-        <div className="r">
-          <div className="col"></div>
-          <div className="col"></div>
+      {info && Object.keys(info).length > 1 && (
+        <div className="r centr">
+          <div className="c centr">
+            <h5>{info.tracks.hits[0].track.title}</h5>
+            <h6>{info.tracks.hits[0].track.subtitle}</h6>
+            <img
+              width={200}
+              height={200}
+              src={info.tracks.hits[0].track.images.coverart}
+              alt={info.tracks.hits[0].track.title}
+            />
+          </div>
+          <div className="c centr">
+            <h5>{info.artists.hits[0].artist.name}</h5>
+            <img
+              src={info.artists.hits[0].artist.avatar}
+              alt={info.artists.hits[0].artist.name}
+              width={200}
+              height={200}
+            />
+            <a href={info.tracks.hits[0].url} className="btn waves-effect">
+              More on Shazam
+            </a>
+          </div>
         </div>
       )}
     </div>

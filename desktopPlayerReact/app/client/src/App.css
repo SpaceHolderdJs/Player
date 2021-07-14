@@ -32,13 +32,36 @@ input {
   align-items: center;
   height: 10vh;
   padding: 10px;
+  background-color: rgba(0, 0, 0, 0.5);
   justify-content: space-between;
   animation: append 1s linear 1;
 }
 
-.Main header .r button {
-  margin-right: 10px;
+.Main header li {
+  margin: 10px;
+  cursor: pointer;
+  transition: 0.3s;
+  align-items: center;
 }
+
+.Main header span {
+  margin: 5px;
+}
+
+.Main header ul {
+  display: flex;
+  align-self: center;
+  justify-self: center;
+}
+
+.Main header li:hover {
+  color: aqua;
+  transform: scale(1.05);
+}
+
+/* .Main header .r button {
+  margin-right: 10px;
+} */
 
 input {
   width: 45vw;
@@ -94,10 +117,15 @@ button {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  animation: append 1s linear 1;
 }
 
 .Player .cntrl {
   margin: 5px;
+}
+
+.Studio {
+  animation: append 1s linear 1;
 }
 
 .Playlist {

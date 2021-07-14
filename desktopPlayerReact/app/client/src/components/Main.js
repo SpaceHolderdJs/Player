@@ -2,6 +2,7 @@ import React, { Component } from "react";
 
 import User from "./User";
 import Player from "./Player";
+import Studio from "./Studio";
 
 export default class Main extends Component {
   constructor(props) {
@@ -9,6 +10,7 @@ export default class Main extends Component {
     this.state = {
       module: "login",
       form: {},
+      tab: "player",
     };
 
     this.handleAuth = this.handleAuth.bind(this);
@@ -17,6 +19,7 @@ export default class Main extends Component {
     this.handleModuleSwitch = this.handleModuleSwitch.bind(this);
     this.handleRegister = this.handleRegister.bind(this);
     this.handleCheck = this.handleCheck.bind(this);
+    this.handleChangeTab = this.handleChangeTab.bind(this);
   }
 
   componentDidMount() {
@@ -93,8 +96,13 @@ export default class Main extends Component {
     }
   }
 
+  handleChangeTab(e) {
+    console.log(e.target.getAttribute("name"));
+    this.setState({ tab: e.target.getAttribute("data-name") });
+  }
+
   render() {
-    const { module, user } = this.state;
+    const { module, user, tab } = this.state;
 
     if (!user) {
       return (
@@ -180,13 +188,31 @@ export default class Main extends Component {
     } else {
       return (
         <div className="Main">
-          <header>
+          <header className="nav-wrapper">
             {user && <User user={user} />}
+            <ul className="r centr">
+              <li
+                className="r"
+                data-name="player"
+                style={{ color: tab === "player" ? "aqua" : "white" }}
+                onClick={this.handleChangeTab}>
+                <i className="material-icons tiny">music_note</i>
+                <span data-name="player">Player</span>
+              </li>
+              <li
+                className="r"
+                data-name="audioStudio"
+                style={{ color: tab !== "player" ? "aqua" : "white" }}
+                onClick={this.handleChangeTab}>
+                <i className="material-icons tiny">settings_input_component</i>
+                <span data-name="audioStudio">Audio Studio</span>
+              </li>
+            </ul>
             <button className="btn waves-effect" onClick={this.hadleLogout}>
               Logout
             </button>
           </header>
-          <Player />
+          {tab === "player" ? <Player /> : <Studio />}
         </div>
       );
     }
