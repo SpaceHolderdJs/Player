@@ -11,6 +11,7 @@ export default class Main extends Component {
       module: "login",
       form: {},
       tab: "player",
+      files: [],
     };
 
     this.handleAuth = this.handleAuth.bind(this);
@@ -20,6 +21,7 @@ export default class Main extends Component {
     this.handleRegister = this.handleRegister.bind(this);
     this.handleCheck = this.handleCheck.bind(this);
     this.handleChangeTab = this.handleChangeTab.bind(this);
+    this.handleFilesInit = this.handleFilesInit.bind(this);
   }
 
   componentDidMount() {
@@ -68,6 +70,11 @@ export default class Main extends Component {
     } else {
       window.M.toast({ html: "Enter email or password" });
     }
+  }
+
+  handleFilesInit(data) {
+    const { files } = this.state;
+    this.setState({ files: Array.from(new Set([...files, ...data])) });
   }
 
   hadleLogout() {
@@ -186,6 +193,15 @@ export default class Main extends Component {
         </div>
       );
     } else {
+      const { files } = this.state;
+
+      const filteredFiles = [];
+      files.forEach(
+        (e) =>
+          !filteredFiles.find((el) => el.name === e.name) &&
+          filteredFiles.push(e)
+      );
+
       return (
         <div className="Main">
           <header className="nav-wrapper">
@@ -212,7 +228,14 @@ export default class Main extends Component {
               Logout
             </button>
           </header>
-          {tab === "player" ? <Player /> : <Studio />}
+          {tab === "player" ? (
+            <Player initMainFiles={this.handleFilesInit} />
+          ) : (
+            <Studio
+              initMainFiles={this.handleFilesInit}
+              files={filteredFiles}
+            />
+          )}
         </div>
       );
     }

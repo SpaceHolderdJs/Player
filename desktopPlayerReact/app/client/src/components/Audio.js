@@ -14,7 +14,7 @@ export default class Audio extends Component {
     audio.setAttribute("data-name", e.target.getAttribute("data-name"));
     audio.src = e.target.getAttribute("data-path");
     audio.play();
-    setPlaying(false);
+    setPlaying && setPlaying(false);
   }
 
   render() {

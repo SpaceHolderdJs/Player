@@ -62,7 +62,7 @@ export default class Player extends Component {
     };
 
     setInterval(() => {
-      if (this.duration && !audio.paused) {
+      if (this.duration && !this.audio.paused) {
         console.log(this.audio.currentTime.toFixed(0));
         this.timer.textContent = this.convertTime(this.audio.currentTime);
       }
@@ -73,187 +73,195 @@ export default class Player extends Component {
     window.M.AutoInit();
 
     // THREE
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(
-      75,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000
-    );
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    // renderer.setClearColor("rgb(38, 41, 38)");
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
-
-    //texturing
-
-    const textureLoader = new THREE.TextureLoader();
-
-    const tiles = textureLoader.load(`${texture}`);
-    console.log(tiles, texture);
-    tiles.anisotropy = 20;
-
-    const ballGeometry = new THREE.SphereBufferGeometry(4, 30, 30);
-    ballGeometry.computeFaceNormals();
-    ballGeometry.computeVertexNormals();
-    const material = new THREE.MeshStandardMaterial({
-      wireframe: true,
-      roughness: 0.3,
-      metalness: 0.9,
-      blending: true,
-    });
-
-    // renderer.physicallyCorrectLights = true;
-
-    const ballMaterial = new THREE.MeshStandardMaterial({
-      color: new THREE.Color("black"),
-      roughness: 0.5,
-      metalness: 0.9,
-      side: THREE.BackSide,
-      colorWrite: true,
-      flatShading: true,
-      normalMap: tiles,
-      blending: true,
-      refractionRatio: 10,
-    });
-
-    const ball = new THREE.Mesh(ballGeometry, ballMaterial);
-    scene.add(ball);
-    ball.position.z = 0;
-
-    scene.background = new THREE.Color("black");
-
-    scene.fog = new THREE.FogExp2(new THREE.Color("rgb(38, 41, 38)"), 0.01);
-
-    const planeGeometry = new THREE.PlaneGeometry(550, 550, 199, 199);
-    const position = planeGeometry.attributes.position;
-
-    for (let i = 0; i < position.count; i++) {
-      const z = Math.random() * 10 * Math.sin(Math.random() / 2);
-      position.setZ(i, z);
-    }
-
-    camera.position.z = 10;
-
-    const light = new THREE.PointLight(0xffff, 10, 1000);
-
-    light.position.set(3, 3, -5);
-    scene.add(light);
-
-    const light2 = new THREE.PointLight("red", 10, 1000);
-
-    light2.position.set(-3, -3, -5);
-    scene.add(light2);
-
-    const plane = new THREE.Mesh(planeGeometry, material);
-    scene.add(plane);
-
-    plane.rotateX(90);
-    plane.position.setY(-30);
-
-    // listeners
-
-    window.addEventListener("mousemove", (e) => {
-      camera.position.x += (e.pageX - window.innerWidth / 2) / 50000;
-      camera.position.y += (e.pageY - window.innerHeight / 2) / 50000;
-    });
-
-    window.addEventListener("resize", function () {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-
+    if (!document.querySelector(".three")) {
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      const renderer = new THREE.WebGLRenderer({
+        alpha: true,
+        antialias: true,
+      });
+      // renderer.setClearColor("rgb(38, 41, 38)");
       renderer.setSize(window.innerWidth, window.innerHeight);
-    });
+      renderer.domElement.className = "three";
+      document.body.appendChild(renderer.domElement);
 
-    [...document.querySelectorAll("input")].forEach((e) =>
-      e.addEventListener("click", () => {
-        plane.material.color.setColorName("teal");
-        return setTimeout(() => {
-          plane.material.color.setColorName("white");
-        }, 3000);
-      })
-    );
+      //texturing
 
-    //visualizer
+      const textureLoader = new THREE.TextureLoader();
 
-    const audioCtx = new AudioContext();
-    const analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 2048;
-    const audio = this.audio || document.querySelector("audio");
+      const tiles = textureLoader.load(`${texture}`);
+      console.log(tiles, texture);
+      tiles.anisotropy = 20;
 
-    const source = audio ? audioCtx.createMediaElementSource(audio) : null;
-
-    source.connect(analyser);
-    analyser.connect(audioCtx.destination);
-    console.log("==", analyser.channelCount);
-    console.log(audio);
-
-    const freqs = new Uint8Array(analyser.frequencyBinCount);
-
-    //equalizer
-
-    const createFilter = (frequency) => {
-      const filter = audioCtx.createBiquadFilter();
-
-      filter.type = "peaking";
-      filter.frequency.value = frequency;
-      filter.Q.value = 1;
-      filter.gain.value = 0;
-
-      return filter;
-    };
-
-    const createFilters = () => {
-      const filters = frequencies.map(createFilter);
-
-      filters.reduce((prev, curr) => {
-        prev.connect(curr);
-        return curr;
+      const ballGeometry = new THREE.SphereBufferGeometry(4, 30, 30);
+      ballGeometry.computeFaceNormals();
+      ballGeometry.computeVertexNormals();
+      const material = new THREE.MeshStandardMaterial({
+        wireframe: true,
+        roughness: 0.3,
+        metalness: 0.9,
+        blending: true,
       });
 
-      return filters;
-    };
+      // renderer.physicallyCorrectLights = true;
 
-    const filters = createFilters();
+      const ballMaterial = new THREE.MeshStandardMaterial({
+        color: new THREE.Color("black"),
+        roughness: 0.5,
+        metalness: 0.9,
+        side: THREE.BackSide,
+        colorWrite: true,
+        flatShading: true,
+        normalMap: tiles,
+        blending: true,
+        refractionRatio: 10,
+      });
 
-    this.setState({ filters: filters });
+      const ball = new THREE.Mesh(ballGeometry, ballMaterial);
+      scene.add(ball);
+      ball.position.z = 0;
 
-    source.connect(filters[0]);
-    filters[filters.length - 1].connect(audioCtx.destination);
+      scene.background = new THREE.Color("black");
 
-    const animate = () => {
-      requestAnimationFrame(animate);
-      ball.rotation.x += 0.005;
-      ball.rotation.y += 0.005;
+      scene.fog = new THREE.FogExp2(new THREE.Color("rgb(38, 41, 38)"), 0.01);
 
-      plane.rotation.z += 0.003;
+      const planeGeometry = new THREE.PlaneGeometry(550, 550, 199, 199);
+      const position = planeGeometry.attributes.position;
 
-      if (!audio.paused) {
-        analyser.getByteFrequencyData(freqs);
-        this.markers &&
-          [...this.markers.children].forEach(
-            (e, i) => (e.style.height = `${freqs[i] / 3}px`)
-          );
-        plane.material.color.setRGB(freqs[9], freqs[4], freqs[12]);
-
-        if (this.charts) {
-          const newData = freqs.filter((e, i) => i % 6 === 0).slice(0, 9);
-          newData.forEach((e, i) => (this.charts.data.datasets[0].data[i] = e));
-
-          this.charts.update("active");
-        }
-
-        light.color.setRGB(freqs[9] / 100, freqs[4] / 100, freqs[12] / 100);
-        light2.color.setRGB(freqs[15] / 100, freqs[20] / 100, freqs[1] / 100);
+      for (let i = 0; i < position.count; i++) {
+        const z = Math.random() * 10 * Math.sin(Math.random() / 2);
+        position.setZ(i, z);
       }
 
-      const position = planeGeometry.attributes.position;
-      position.usage = THREE.DynamicDrawUsage;
+      camera.position.z = 10;
 
-      renderer.render(scene, camera);
-    };
+      const light = new THREE.PointLight(0xffff, 10, 1000);
 
-    animate();
+      light.position.set(3, 3, -5);
+      scene.add(light);
+
+      const light2 = new THREE.PointLight("red", 10, 1000);
+
+      light2.position.set(-3, -3, -5);
+      scene.add(light2);
+
+      const plane = new THREE.Mesh(planeGeometry, material);
+      scene.add(plane);
+
+      plane.rotateX(90);
+      plane.position.setY(-30);
+
+      // listeners
+
+      window.addEventListener("mousemove", (e) => {
+        camera.position.x += (e.pageX - window.innerWidth / 2) / 50000;
+        camera.position.y += (e.pageY - window.innerHeight / 2) / 50000;
+      });
+
+      window.addEventListener("resize", function () {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      [...document.querySelectorAll("input")].forEach((e) =>
+        e.addEventListener("click", () => {
+          plane.material.color.setColorName("teal");
+          return setTimeout(() => {
+            plane.material.color.setColorName("white");
+          }, 3000);
+        })
+      );
+
+      //visualizer
+
+      const audioCtx = new AudioContext();
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 2048;
+      const audio = this.audio || document.querySelector("audio");
+
+      const source = audio ? audioCtx.createMediaElementSource(audio) : null;
+
+      source.connect(analyser);
+      analyser.connect(audioCtx.destination);
+      console.log("==", analyser.channelCount);
+      console.log(audio);
+
+      const freqs = new Uint8Array(analyser.frequencyBinCount);
+
+      //equalizer
+
+      const createFilter = (frequency) => {
+        const filter = audioCtx.createBiquadFilter();
+
+        filter.type = "peaking";
+        filter.frequency.value = frequency;
+        filter.Q.value = 1;
+        filter.gain.value = 0;
+
+        return filter;
+      };
+
+      const createFilters = () => {
+        const filters = frequencies.map(createFilter);
+
+        filters.reduce((prev, curr) => {
+          prev.connect(curr);
+          return curr;
+        });
+
+        return filters;
+      };
+
+      const filters = createFilters();
+
+      this.setState({ filters: filters });
+
+      source.connect(filters[0]);
+      filters[filters.length - 1].connect(audioCtx.destination);
+
+      const animate = () => {
+        requestAnimationFrame(animate);
+        ball.rotation.x += 0.005;
+        ball.rotation.y += 0.005;
+
+        plane.rotation.z += 0.003;
+
+        if (!audio.paused) {
+          analyser.getByteFrequencyData(freqs);
+          this.markers &&
+            [...this.markers.children].forEach(
+              (e, i) => (e.style.height = `${freqs[i] / 3}px`)
+            );
+          plane.material.color.setRGB(freqs[9], freqs[4], freqs[12]);
+
+          if (this.charts) {
+            const newData = freqs.filter((e, i) => i % 6 === 0).slice(0, 9);
+            newData.forEach(
+              (e, i) => (this.charts.data.datasets[0].data[i] = e)
+            );
+
+            this.charts.update("active");
+          }
+
+          light.color.setRGB(freqs[9] / 100, freqs[4] / 100, freqs[12] / 100);
+          light2.color.setRGB(freqs[15] / 100, freqs[20] / 100, freqs[1] / 100);
+        }
+
+        const position = planeGeometry.attributes.position;
+        position.usage = THREE.DynamicDrawUsage;
+
+        renderer.render(scene, camera);
+      };
+
+      animate();
+    }
   }
 
   setPlaying(val) {
@@ -317,6 +325,8 @@ export default class Player extends Component {
   }
 
   handleInitFiles(e) {
+    const { initMainFiles } = this.props;
+
     console.log(e.target.files);
     const files = Object.values(e.target.files).filter((e) =>
       e.type.includes("audio")
@@ -330,6 +340,8 @@ export default class Player extends Component {
       files: Array.from(new Set([...this.state.files, ...files])),
       current: files[0],
     });
+
+    initMainFiles(Array.from(new Set([...this.state.files, ...files])));
 
     console.log(this.state.dirs);
 
