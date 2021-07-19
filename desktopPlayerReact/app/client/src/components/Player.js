@@ -3,13 +3,9 @@ import { Line } from "react-chartjs-2";
 
 import * as THREE from "three";
 
-import texture from "../../src/tiles.png";
-
 import Playlist from "./Playlist";
 import Songs from "./Songs";
 import TrackInfo from "./TrackInfo";
-
-console.log("__", texture);
 
 export default class Player extends Component {
   constructor(props) {
@@ -22,7 +18,6 @@ export default class Player extends Component {
       duration: 0,
       sections: ["Folders", "Equalizer", "TrackInfo"],
       activeSection: "Folders",
-      frequencies: [60, 170, 310, 600, 1000, 3000, 6000, 12000, 14000, 16000],
       eqvValues: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
       filterTypes: [
         "peaking",
@@ -54,214 +49,56 @@ export default class Player extends Component {
   }
 
   componentDidMount() {
-    const { frequencies } = this.state;
+    const { frequencies, audio, filters, analyser } = this.props.mainData;
+    this.audio = audio;
 
     this.audio.onplay = this.handleAudioPlay;
     this.audio.onloadedmetadata = () => {
       this.setState({ duration: Math.floor(this.audio.duration) });
     };
 
-    setInterval(() => {
+    this.interval = setInterval(() => {
       if (this.duration && !this.audio.paused) {
-        console.log(this.audio.currentTime.toFixed(0));
         this.timer.textContent = this.convertTime(this.audio.currentTime);
       }
       this.duration &&
         (this.duration.value = this.audio.currentTime.toFixed(0));
     }, 50);
 
-    window.M.AutoInit();
+    const freqs = new Uint8Array(analyser.frequencyBinCount);
 
-    // THREE
-    if (!document.querySelector(".three")) {
-      const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(
-        75,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        1000
-      );
-      const renderer = new THREE.WebGLRenderer({
-        alpha: true,
-        antialias: true,
-      });
-      // renderer.setClearColor("rgb(38, 41, 38)");
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.domElement.className = "three";
-      document.body.appendChild(renderer.domElement);
+    const animate = () => {
+      this.animation = requestAnimationFrame(animate);
+      analyser.getByteFrequencyData(freqs);
 
-      //texturing
+      this.markers &&
+        [...this.markers.children].forEach(
+          (e, i) => (e.style.height = `${freqs[i] / 3}px`)
+        );
 
-      const textureLoader = new THREE.TextureLoader();
+      if (this.charts) {
+        const newData = freqs.filter((e, i) => i % 6 === 0).slice(0, 9);
+        newData.forEach((e, i) => (this.charts.data.datasets[0].data[i] = e));
 
-      const tiles = textureLoader.load(`${texture}`);
-      console.log(tiles, texture);
-      tiles.anisotropy = 20;
-
-      const ballGeometry = new THREE.SphereBufferGeometry(4, 30, 30);
-      ballGeometry.computeFaceNormals();
-      ballGeometry.computeVertexNormals();
-      const material = new THREE.MeshStandardMaterial({
-        wireframe: true,
-        roughness: 0.3,
-        metalness: 0.9,
-        blending: true,
-      });
-
-      // renderer.physicallyCorrectLights = true;
-
-      const ballMaterial = new THREE.MeshStandardMaterial({
-        color: new THREE.Color("black"),
-        roughness: 0.5,
-        metalness: 0.9,
-        side: THREE.BackSide,
-        colorWrite: true,
-        flatShading: true,
-        normalMap: tiles,
-        blending: true,
-        refractionRatio: 10,
-      });
-
-      const ball = new THREE.Mesh(ballGeometry, ballMaterial);
-      scene.add(ball);
-      ball.position.z = 0;
-
-      scene.background = new THREE.Color("black");
-
-      scene.fog = new THREE.FogExp2(new THREE.Color("rgb(38, 41, 38)"), 0.01);
-
-      const planeGeometry = new THREE.PlaneGeometry(550, 550, 199, 199);
-      const position = planeGeometry.attributes.position;
-
-      for (let i = 0; i < position.count; i++) {
-        const z = Math.random() * 10 * Math.sin(Math.random() / 2);
-        position.setZ(i, z);
+        this.charts.update("active");
       }
+    };
 
-      camera.position.z = 10;
+    animate();
 
-      const light = new THREE.PointLight(0xffff, 10, 1000);
+    window.M.AutoInit();
+  }
 
-      light.position.set(3, 3, -5);
-      scene.add(light);
+  componentWillUnmount() {
+    const { filters } = this.props.mainData;
 
-      const light2 = new THREE.PointLight("red", 10, 1000);
+    filters.forEach((e) => {
+      e.gain.value = 0;
+      e.type = "peaking";
+    });
 
-      light2.position.set(-3, -3, -5);
-      scene.add(light2);
-
-      const plane = new THREE.Mesh(planeGeometry, material);
-      scene.add(plane);
-
-      plane.rotateX(90);
-      plane.position.setY(-30);
-
-      // listeners
-
-      window.addEventListener("mousemove", (e) => {
-        camera.position.x += (e.pageX - window.innerWidth / 2) / 50000;
-        camera.position.y += (e.pageY - window.innerHeight / 2) / 50000;
-      });
-
-      window.addEventListener("resize", function () {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-
-        renderer.setSize(window.innerWidth, window.innerHeight);
-      });
-
-      [...document.querySelectorAll("input")].forEach((e) =>
-        e.addEventListener("click", () => {
-          plane.material.color.setColorName("teal");
-          return setTimeout(() => {
-            plane.material.color.setColorName("white");
-          }, 3000);
-        })
-      );
-
-      //visualizer
-
-      const audioCtx = new AudioContext();
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 2048;
-      const audio = this.audio || document.querySelector("audio");
-
-      const source = audio ? audioCtx.createMediaElementSource(audio) : null;
-
-      source.connect(analyser);
-      analyser.connect(audioCtx.destination);
-      console.log("==", analyser.channelCount);
-      console.log(audio);
-
-      const freqs = new Uint8Array(analyser.frequencyBinCount);
-
-      //equalizer
-
-      const createFilter = (frequency) => {
-        const filter = audioCtx.createBiquadFilter();
-
-        filter.type = "peaking";
-        filter.frequency.value = frequency;
-        filter.Q.value = 1;
-        filter.gain.value = 0;
-
-        return filter;
-      };
-
-      const createFilters = () => {
-        const filters = frequencies.map(createFilter);
-
-        filters.reduce((prev, curr) => {
-          prev.connect(curr);
-          return curr;
-        });
-
-        return filters;
-      };
-
-      const filters = createFilters();
-
-      this.setState({ filters: filters });
-
-      source.connect(filters[0]);
-      filters[filters.length - 1].connect(audioCtx.destination);
-
-      const animate = () => {
-        requestAnimationFrame(animate);
-        ball.rotation.x += 0.005;
-        ball.rotation.y += 0.005;
-
-        plane.rotation.z += 0.003;
-
-        if (!audio.paused) {
-          analyser.getByteFrequencyData(freqs);
-          this.markers &&
-            [...this.markers.children].forEach(
-              (e, i) => (e.style.height = `${freqs[i] / 3}px`)
-            );
-          plane.material.color.setRGB(freqs[9], freqs[4], freqs[12]);
-
-          if (this.charts) {
-            const newData = freqs.filter((e, i) => i % 6 === 0).slice(0, 9);
-            newData.forEach(
-              (e, i) => (this.charts.data.datasets[0].data[i] = e)
-            );
-
-            this.charts.update("active");
-          }
-
-          light.color.setRGB(freqs[9] / 100, freqs[4] / 100, freqs[12] / 100);
-          light2.color.setRGB(freqs[15] / 100, freqs[20] / 100, freqs[1] / 100);
-        }
-
-        const position = planeGeometry.attributes.position;
-        position.usage = THREE.DynamicDrawUsage;
-
-        renderer.render(scene, camera);
-      };
-
-      animate();
-    }
+    window.cancelAnimationFrame(this.animation);
+    clearInterval(this.interval);
   }
 
   setPlaying(val) {
@@ -269,7 +106,8 @@ export default class Player extends Component {
   }
 
   handleFilterChange(e) {
-    const { filters, eqvValues } = this.state;
+    const { eqvValues } = this.state;
+    const { filters } = this.props.mainData;
     const indx = +e.target.getAttribute("data-i");
     filters[indx].gain.value = e.target.value;
     eqvValues[indx] = e.target.value;
@@ -277,7 +115,7 @@ export default class Player extends Component {
   }
 
   handleSelectFilter(e) {
-    const { filters } = this.state;
+    const { filters } = this.props.mainData;
     filters.forEach((el) => (el.type = e.target.value));
   }
 
@@ -380,15 +218,10 @@ export default class Player extends Component {
 
   render() {
     const { files, current, playing, dirs } = this.state;
-    const {
-      duration,
-      sections,
-      activeSection,
-      filters,
-      frequencies,
-      eqvValues,
-      filterTypes,
-    } = this.state;
+    const { duration, sections, activeSection, eqvValues, filterTypes } =
+      this.state;
+
+    const { frequencies, filters } = this.props.mainData;
 
     const markers = [];
     for (let i = 0; i < 100; i++) {
@@ -397,7 +230,6 @@ export default class Player extends Component {
 
     return (
       <div className="Player">
-        <audio ref={(e) => (this.audio = e)}></audio>
         {files.length === 0 && (
           <div className="c centr" style={{ margin: "25vh" }}>
             <p>Upload audios to start</p>

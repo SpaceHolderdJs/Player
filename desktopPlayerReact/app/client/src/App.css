@@ -441,6 +441,7 @@ option {
   height: 40vh;
   margin: 5px;
   padding: 10px;
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 .Studio .files-block {

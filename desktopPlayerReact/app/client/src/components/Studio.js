@@ -17,28 +17,33 @@ export default class Studio extends Component {
   }
 
   componentDidMount() {
-    const { files } = this.props;
+    const { files, pause } = this.props;
     files.length > 0 && this.setState({ files });
+    console.log(files);
+    pause && this.audio && this.audio.pause();
   }
 
   handleInitFiles(e) {
     const { files } = this.state;
     const { initMainFiles } = this.props;
 
-    const f = Object.values(e.target.files).filter((e) =>
-      e.type.includes("audio")
+    const f = Object.values(e.target.files).filter((el) =>
+      el.type.includes("audio")
     );
 
     f.forEach((e) => !files.find((el) => el.name === e.name) && files.push(e));
+    console.log(files);
+    alert("!!");
 
     this.setState({ files: files });
-    initMainFiles(files);
+    // initMainFiles(files);
   }
 
   setActive() {}
 
   render() {
     const { files, sections, activeSection } = this.state;
+    console.log(files);
 
     return (
       <div className="Studio c centr">
@@ -53,7 +58,6 @@ export default class Studio extends Component {
                 <i className="material-icons">library_music</i>
               </label>
               <input
-                id="file"
                 type="file"
                 webkitdirectory="true"
                 multiple
@@ -78,7 +82,7 @@ export default class Studio extends Component {
             {activeSection === "audios" && (
               <Section
                 audio={this.audio}
-                tracks={files.filter((e) => e.size > 10000)}
+                tracks={files.filter((e) => e.size > 100)}
               />
             )}
             {activeSection === "sounds" && (
