@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 
-import Audio from "./Audio";
 import Section from "./Section";
+import AudioEdit from "./AudioEdit";
 
 export default class Studio extends Component {
   constructor(props) {
@@ -10,17 +10,40 @@ export default class Studio extends Component {
       sections: ["audios", "sounds"],
       activeSection: "audios",
       files: [],
+      processingFiles: [],
     };
 
     this.handleInitFiles = this.handleInitFiles.bind(this);
     this.setActive = this.setActive.bind(this);
+
+    this.initProcessingFiles = this.initProcessingFiles.bind(this);
   }
 
   componentDidMount() {
-    const { files, pause } = this.props;
+    const { files } = this.props;
+    const { audio } = this.props.mainData;
+    this.audio = audio;
+
     files.length > 0 && this.setState({ files });
-    console.log(files);
-    pause && this.audio && this.audio.pause();
+
+    const timeLine = [];
+
+    for (let i = 0; i < 601; i++) {
+      timeLine.push(i);
+    }
+
+    this.setState({ timeLine });
+  }
+
+  componentDidUpdate() {
+    const inps = document.querySelectorAll("input[type=range]");
+    window.M.Range.init(inps);
+  }
+
+  initProcessingFiles(file) {
+    const { processingFiles } = this.state;
+    processingFiles.push(file);
+    this.setState({ processingFiles: processingFiles });
   }
 
   handleInitFiles(e) {
@@ -33,7 +56,6 @@ export default class Studio extends Component {
 
     f.forEach((e) => !files.find((el) => el.name === e.name) && files.push(e));
     console.log(files);
-    alert("!!");
 
     this.setState({ files: files });
     // initMainFiles(files);
@@ -42,12 +64,12 @@ export default class Studio extends Component {
   setActive() {}
 
   render() {
-    const { files, sections, activeSection } = this.state;
+    const { files, sections, activeSection, processingFiles, timeLine } =
+      this.state;
     console.log(files);
 
     return (
       <div className="Studio c centr">
-        <audio ref={(e) => (this.audio = e)}></audio>
         <div className="r">
           <div className="c block files-block">
             <h5 className="r centr">
@@ -58,6 +80,7 @@ export default class Studio extends Component {
                 <i className="material-icons">library_music</i>
               </label>
               <input
+                id="file"
                 type="file"
                 webkitdirectory="true"
                 multiple
@@ -83,18 +106,41 @@ export default class Studio extends Component {
               <Section
                 audio={this.audio}
                 tracks={files.filter((e) => e.size > 100)}
+                initProcessingFiles={this.initProcessingFiles}
               />
             )}
             {activeSection === "sounds" && (
               <Section
                 audio={this.audio}
                 tracks={files.filter((e) => e.size < 10000)}
+                initProcessingFiles={this.initProcessingFiles}
               />
             )}
           </div>
         </div>
         <div className="c duration-bar block">
-          <div className="r"></div>
+          <div className="c" style={{ position: "sticky" }}>
+            <div className="r" style={{ width: "3000px" }}>
+              {timeLine?.map((e) => (
+                <div className="r centr" style={{ width: "5px" }}>
+                  {+e % 15 === 0 ? "|" : "'"}
+                </div>
+              ))}
+            </div>
+            <div className="range-field timeInp-wrapper">
+              <input
+                className="timeInp"
+                type="range"
+                min="0"
+                max="600"
+                value={0}
+                step={1}
+                style={{ width: "3000px" }}
+              />
+            </div>
+          </div>
+          {processingFiles &&
+            processingFiles.map((e) => <AudioEdit file={e} />)}
         </div>
       </div>
     );

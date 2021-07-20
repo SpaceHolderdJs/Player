@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import Audio from "./Audio";
+import AudioStudio from "./AudioStudio";
 
 export default function Section(props) {
-  const { name, tracks, audio, setPlaying } = props;
+  const { name, tracks, audio, setPlaying, initProcessingFiles } = props;
   const [value, setValue] = useState();
 
   const handleChane = (e) => {
@@ -20,14 +21,24 @@ export default function Section(props) {
         />
       </div>
       {!value &&
-        tracks.map((e) => (
-          <Audio file={e} audio={audio} setPlaying={setPlaying} />
-        ))}
+        tracks.map((e) =>
+          !initProcessingFiles ? (
+            <Audio file={e} audio={audio} setPlaying={setPlaying} />
+          ) : (
+            <AudioStudio file={e} initProcessingFiles={initProcessingFiles} />
+          )
+        )}
 
       {value &&
         tracks
           .filter((e) => e.name.includes(value))
-          .map((e) => <Audio file={e} audio={audio} setPlaying={setPlaying} />)}
+          .map((e) =>
+            !initProcessingFiles ? (
+              <Audio file={e} audio={audio} setPlaying={setPlaying} />
+            ) : (
+              <AudioStudio file={e} initProcessingFiles={initProcessingFiles} />
+            )
+          )}
     </div>
   );
 }

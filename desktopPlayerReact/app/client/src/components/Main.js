@@ -156,8 +156,8 @@ export default class Main extends Component {
       // listeners
 
       window.addEventListener("mousemove", (e) => {
-        camera.position.x += (e.pageX - window.innerWidth / 2) / 50000;
-        camera.position.y += (e.pageY - window.innerHeight / 2) / 50000;
+        camera.position.x += (-e.pageX + window.innerWidth / 2) / 50000;
+        camera.position.y += (-e.pageY + window.innerHeight / 2) / 50000;
       });
 
       window.addEventListener("resize", function () {
@@ -231,7 +231,7 @@ export default class Main extends Component {
 
         scene.children[scene.children.length - 1].rotation.y += 0.0025;
 
-        if (!this.audio.paused) {
+        if (this.audio && !this.audio.paused) {
           this.analyser.getByteFrequencyData(freqs);
 
           light.color.setRGB(freqs[9] / 100, freqs[4] / 100, freqs[12] / 100);
@@ -496,6 +496,12 @@ export default class Main extends Component {
               <Studio
                 initMainFiles={this.handleFilesInit}
                 files={filteredFiles}
+                mainData={{
+                  audio: this.audio,
+                  frequencies,
+                  filters,
+                  analyser: this.analyser,
+                }}
               />
             )}
           </div>

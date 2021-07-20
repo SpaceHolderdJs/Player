@@ -429,6 +429,8 @@ option {
   width: 95%;
   height: 40vh;
   display: flex;
+  padding: 5px;
+  overflow: auto;
 }
 
 .Studio label {
@@ -451,4 +453,30 @@ option {
 .Studio .files-block .song-section {
   width: 340px;
   padding: 5px;
+}
+
+.Studio .duration-bar .AudioEdit {
+  height: 10vh;
+  margin: 1px;
+}
+
+/* .Studio .duration-bar .timeInp {
+} */
+
+.Studio .duration-bar .timeInp::-webkit-slider-thumb {
+  background-color: teal !important;
+  transition: 0.3s all;
+  width: 3px !important;
+  height: 40vh !important;
+  border-radius: 0% !important;
+  cursor: e-resize;
+}
+
+.Studio .duration-bar .timeInp::-webkit-slider-thumb:hover {
+  background-color: aqua !important;
+  box-shadow: 0px 0px 2px 1px aqua;
+}
+
+.Studio .duration-bar .timeInp-wrapper {
+  width: 3000px !important;
 }
