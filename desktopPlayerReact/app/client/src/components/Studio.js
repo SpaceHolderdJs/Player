@@ -11,12 +11,22 @@ export default class Studio extends Component {
       activeSection: "audios",
       files: [],
       processingFiles: [],
+      processingAudios: [],
+      currentTime: 0,
     };
 
     this.handleInitFiles = this.handleInitFiles.bind(this);
     this.setActive = this.setActive.bind(this);
 
     this.initProcessingFiles = this.initProcessingFiles.bind(this);
+    this.deleteProcessingFile = this.deleteProcessingFile.bind(this);
+
+    this.initProcessingAudios = this.initProcessingAudios.bind(this);
+    this.deleteProcessingAudio = this.deleteProcessingAudio.bind(this);
+
+    this.playAllSongs = this.playAllSongs.bind(this);
+
+    this.handleTimeInputChange = this.handleTimeInputChange.bind(this);
   }
 
   componentDidMount() {
@@ -32,6 +42,18 @@ export default class Studio extends Component {
       timeLine.push(i);
     }
 
+    this.interval = setInterval(() => {
+      const { processingAudios } = this.state;
+
+      if (
+        processingAudios.length > 0 &&
+        processingAudios.filter((e) => !e.paused).length > 0
+      )
+        this.timeLineInput.value = processingAudios.sort(
+          (e1, e2) => e1.duration - e2.duraton
+        )[0].currentTime;
+    }, 50);
+
     this.setState({ timeLine });
   }
 
@@ -40,10 +62,50 @@ export default class Studio extends Component {
     window.M.Range.init(inps);
   }
 
+  handleTimeInputChange(e) {
+    const { processingAudios } = this.state;
+    processingAudios.forEach((el) => (el.currentTime = e.target.value));
+    this.setState({ currentTime: e.target.value });
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.interval);
+  }
+
+  playAllSongs() {
+    const { processingAudios } = this.state;
+    processingAudios.length > 0
+      ? processingAudios.forEach((e) => (e.paused ? e.play() : e.pause()))
+      : window.M.toast({ html: "Nothing to play" });
+  }
+
   initProcessingFiles(file) {
     const { processingFiles } = this.state;
     processingFiles.push(file);
     this.setState({ processingFiles: processingFiles });
+  }
+
+  deleteProcessingFile(file) {
+    const { processingFiles } = this.state;
+    const finalFiles = processingFiles.find((e) => e.name === file.name)
+      ? processingFiles.filter((e) => e.name !== file.name)
+      : processingFiles;
+    this.setState({ processingFiles: finalFiles });
+  }
+
+  initProcessingAudios(audio) {
+    const { processingAudios } = this.state;
+    processingAudios.push(audio);
+    this.setState({ processingAudios: processingAudios });
+  }
+
+  deleteProcessingAudio(audio) {
+    const { processingAudios } = this.state;
+    processingAudios.find((e) => e.src === audio.src)?.pause();
+    const finalAudios = processingAudios.find((e) => e.src === audio.src)
+      ? processingAudios.filter((e) => e.src !== audio.src)
+      : processingAudios;
+    this.setState({ processingAudios: finalAudios });
   }
 
   handleInitFiles(e) {
@@ -64,8 +126,15 @@ export default class Studio extends Component {
   setActive() {}
 
   render() {
-    const { files, sections, activeSection, processingFiles, timeLine } =
-      this.state;
+    const {
+      files,
+      sections,
+      activeSection,
+      processingFiles,
+      timeLine,
+      processingAudios,
+      currentTime,
+    } = this.state;
     console.log(files);
 
     return (
@@ -119,10 +188,18 @@ export default class Studio extends Component {
           </div>
         </div>
         <div className="c duration-bar block">
-          <div className="c" style={{ position: "sticky" }}>
-            <div className="r" style={{ width: "3000px" }}>
-              {timeLine?.map((e) => (
-                <div className="r centr" style={{ width: "5px" }}>
+          <div className="c" style={{ position: "sticky", top: "0%" }}>
+            <div className="r">
+              <i
+                className="material-icons"
+                onClick={this.playAllSongs}
+                style={{ cursor: "pointer" }}>
+                {processingAudios[0]?.paused ? "pause" : "play_arrow"}
+              </i>
+            </div>
+            <div className="r" style={{ width: "6000px" }}>
+              {timeLine?.map((e, i) => (
+                <div key={i} className="r centr" style={{ width: "10px" }}>
                   {+e % 15 === 0 ? "|" : "'"}
                 </div>
               ))}
@@ -133,14 +210,23 @@ export default class Studio extends Component {
                 type="range"
                 min="0"
                 max="600"
-                value={0}
+                value={currentTime}
                 step={1}
-                style={{ width: "3000px" }}
+                style={{ width: "6000px" }}
+                onChange={this.handleTimeInputChange}
+                ref={(e) => (this.timeLineInput = e)}
               />
             </div>
           </div>
           {processingFiles &&
-            processingFiles.map((e) => <AudioEdit file={e} />)}
+            processingFiles.map((e) => (
+              <AudioEdit
+                file={e}
+                deleteProcessingFile={this.deleteProcessingFile}
+                deleteProcessingAudio={this.deleteProcessingAudio}
+                initProcessingAudios={this.initProcessingAudios}
+              />
+            ))}
         </div>
       </div>
     );

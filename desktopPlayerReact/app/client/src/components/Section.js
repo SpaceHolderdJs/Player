@@ -13,7 +13,7 @@ export default function Section(props) {
   return (
     <div className="song-section">
       <div className="r">
-        <i class="material-icons prefix">search</i>
+        <i className="material-icons ">search</i>
         <input
           type="text"
           className="search-input-songs"

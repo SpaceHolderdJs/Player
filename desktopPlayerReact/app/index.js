@@ -11,7 +11,7 @@ const expressApp = express();
 
 expressApp.use(express.json({ extended: true }));
 
-expressApp.use("/api/", require("../routes/auth.routes"));
+expressApp.use("/api/", require("./routes/auth.routes"));
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require("electron-squirrel-startup")) {
@@ -25,6 +25,9 @@ const createWindow = () => {
     height: 600,
     webPreferences: {
       webSecurity: false,
+      nodeIntegration: true, // is default value after Electron v5
+      contextIsolation: false, // protect against prototype pollution
+      enableRemoteModule: true,
     },
   });
 
@@ -60,6 +63,25 @@ app.on("window-all-closed", () => {
 app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
+  }
+});
+
+//file operations
+
+const { ipcMain } = require("electron");
+
+//cutting file
+const MP3Cutter = require("mp3-cutter");
+
+ipcMain.on("saveFile", (event, file) => {
+  console.log("heyyyy", file);
+  if (file.start && file.end) {
+    MP3Cutter.cut({
+      src: file.path,
+      target: path.join(__dirname, "audios", "[changed]" + file.name),
+      start: file.start,
+      end: file.end,
+    });
   }
 });
 
