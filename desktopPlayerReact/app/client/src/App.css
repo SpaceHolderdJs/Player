@@ -458,6 +458,7 @@ option {
 .Studio .duration-bar .AudioEdit {
   height: 80px;
   margin: 1px;
+  display: flex;
   transition: 0.3s all;
 }
 
@@ -474,12 +475,20 @@ option {
 }
 
 .Studio .duration-bar .AudioEdit .pinsParent {
-  position: relative;
-  top: -10px;
-  margin-left: auto;
-  margin-right: auto;
+  display: flex;
+  width: 100%;
+  justify-content: center;
   max-height: 80px;
   height: 70px;
+  margin-top: -15px;
+}
+
+.Studio .duration-bar .AudioEdit select {
+  width: 65px;
+  height: 30px;
+  font-size: 15px;
+  color: white;
+  outline: none;
 }
 
 .Studio .duration-bar .AudioEdit .pin {
@@ -489,9 +498,6 @@ option {
 .Studio .duration-bar .AudioEdit:hover {
   box-shadow: 0px 0px 2px 1px aqua, inset 0px 0px 5px 1px white;
 }
-
-/* .Studio .duration-bar .timeInp {
-} */
 
 .Studio .duration-bar .timeInp::-webkit-slider-thumb {
   background-color: teal !important;

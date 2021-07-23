@@ -15,11 +15,14 @@ export default class AudioEdit extends Component {
         b: Math.floor(Math.random() * 250),
       },
       cutting: false,
+      loading: false,
+      format: null,
     };
 
     this.cut = this.cut.bind(this);
 
     this.saveFile = this.saveFile.bind(this);
+    this.selectFormat = this.selectFormat.bind(this);
   }
 
   componentDidMount() {
@@ -77,27 +80,45 @@ export default class AudioEdit extends Component {
     animate();
   }
 
+  selectFormat(e) {
+    this.setState({ format: e.target.value });
+  }
+
   cut() {
     this.setState({ cutting: true });
   }
 
   saveFile() {
     const { file } = this.props;
-    const { start, end } = this.state;
+    const { start, end, format } = this.state;
 
     ipcRenderer.send("saveFile", {
       path: file.path,
       name: file.name,
       start,
       end,
+      format,
     });
 
-    window.M.toast({ html: "Track was saved " });
+    this.setState({ loading: true });
+
+    ipcRenderer.on("fileSaved", (event, files) => {
+      console.log("!!", files);
+      this.setState({ loading: false });
+      window.M.toast({ html: "Track was saved " });
+    });
+
+    ipcRenderer.on("error", (event, message) => {
+      window.M.toast({ html: message });
+      this.setState({ loading: false });
+    });
+
+    window.M.toast({ html: "Processing... " });
   }
 
   render() {
     const { file, deleteProcessingFile, deleteProcessingAudio } = this.props;
-    const { duration, color, end, cutting, start } = this.state;
+    const { duration, color, end, cutting, start, loading } = this.state;
 
     return (
       <div
@@ -130,7 +151,7 @@ export default class AudioEdit extends Component {
             connect
           />
         )}
-        <div className="r" style={{ fontSize: "15px" }}>
+        <div className="r" style={{ fontSize: "15px", zIndex: "10" }}>
           <span className="tools">{file.name}</span>
           <span className="tools">
             {(end / 60).toFixed(0).length > 1
@@ -202,8 +223,44 @@ export default class AudioEdit extends Component {
             onClick={this.saveFile}>
             save
           </i>
+          {loading && (
+            <div
+              className="preloader-wrapper small active tools"
+              style={{ width: "15px", height: "15px" }}>
+              <div className="spinner-layer spinner-green-only">
+                <div className="circle-clipper left">
+                  <div className="circle"></div>
+                </div>
+                <div className="gap-patch">
+                  <div className="circle"></div>
+                </div>
+                <div className="circle-clipper right">
+                  <div className="circle"></div>
+                </div>
+              </div>
+            </div>
+          )}
+          <select
+            className="browser-default tools"
+            style={{
+              background: `rgba(${color.r},${color.g},${color.b}, 0.7)`,
+            }}
+            onChange={this.selectFormat}>
+            <option value="mp3" selected>
+              mp3
+            </option>
+            <option value="flac">flac</option>
+            <option value="wav">wav</option>
+            <option value="ogg">ogg</option>
+          </select>
         </div>
-        <div className="r pinsParent" ref={(e) => (this.pinsParent = e)}>
+        <div
+          className="r pinsParent"
+          ref={(e) => (this.pinsParent = e)}
+          style={{
+            width: `${cutting ? end + "px" : "100%"}`,
+            display: `${cutting ? "none" : "flex"}`,
+          }}>
           {this.pins?.map((e, i) => (
             <div
               key={i}

@@ -3,6 +3,7 @@ const { app, BrowserWindow } = require("electron");
 const path = require("path");
 const dir = require("node-dir");
 const os = require("os");
+const fs = require("fs");
 
 const express = require("express");
 const mongoose = require("mongoose");
@@ -68,20 +69,87 @@ app.on("activate", () => {
 
 //file operations
 
+//initing folder for files
+
+if (!fs.existsSync(path.join(os.homedir(), "audios"))) {
+  fs.mkdir(path.join(os.homedir(), "audios"), (err) => {
+    err && console.log(err);
+  });
+}
+
 const { ipcMain } = require("electron");
 
 //cutting file
 const MP3Cutter = require("mp3-cutter");
 
+const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
+const ffmpeg = require("fluent-ffmpeg");
+ffmpeg.setFfmpegPath(ffmpegPath);
+
 ipcMain.on("saveFile", (event, file) => {
   console.log("heyyyy", file);
-  if (file.start && file.end) {
-    MP3Cutter.cut({
-      src: file.path,
-      target: path.join(__dirname, "audios", "[changed]" + file.name),
-      start: file.start,
-      end: file.end,
-    });
+  const folder = path.join(os.homedir(), "audios");
+
+  const process = ffmpeg({ source: path.normalize(file.path) });
+
+  if (file.format) {
+    process
+      .setStartTime(file.start || 0)
+      .setDuration(file.end - file.start)
+      .outputFormat(file.format)
+      .save(
+        path.join(
+          folder,
+          "[modified]" + new Date().toLocaleDateString() + file.name
+        )
+      )
+      .on("error", (err) => {
+        err && event.reply("error", err);
+      })
+      .on("end", () => {
+        const audios = [];
+        fs.readdir(folder, (err, files) => {
+          err && event.reply("error", err.message);
+
+          files.forEach((e) =>
+            audios.push({
+              name: path.basename(e),
+              path: path.join(folder, e),
+            })
+          );
+
+          console.log(audios, folder);
+
+          event.reply("fileSaved", audios);
+        });
+      });
+  } else {
+    process
+      .setStartTime(file.start || 0)
+      .setDuration(file.end - file.start)
+      .save(
+        path.join(
+          folder,
+          "[modified]" + new Date().toLocaleDateString() + file.name
+        )
+      )
+      .on("end", () => {
+        const audios = [];
+        fs.readdir(folder, (err, files) => {
+          err && event.reply("error", err.message);
+
+          files.forEach((e) =>
+            audios.push({
+              name: path.basename(e),
+              path: path.join(folder, e),
+            })
+          );
+
+          console.log(audios, folder);
+
+          event.reply("fileSaved", audios);
+        });
+      });
   }
 });
 
