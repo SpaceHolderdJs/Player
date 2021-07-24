@@ -13,6 +13,17 @@ export default class Studio extends Component {
       processingFiles: [],
       processingAudios: [],
       currentTime: 0,
+      selectedAudio: null,
+      filterTypes: [
+        "peaking",
+        "notch",
+        "allpass",
+        "bandpass",
+        "highpass",
+        "lowpass",
+        "highshelf",
+        "lowshelf",
+      ],
     };
 
     this.handleInitFiles = this.handleInitFiles.bind(this);
@@ -27,10 +38,12 @@ export default class Studio extends Component {
     this.playAllSongs = this.playAllSongs.bind(this);
 
     this.handleTimeInputChange = this.handleTimeInputChange.bind(this);
+
+    this.setSelectedAudio = this.setSelectedAudio.bind(this);
   }
 
   componentDidMount() {
-    const { files } = this.props;
+    const { files, frequencies } = this.props;
     const { audio } = this.props.mainData;
     this.audio = audio;
 
@@ -108,6 +121,10 @@ export default class Studio extends Component {
     this.setState({ processingAudios: finalAudios });
   }
 
+  setSelectedAudio(data) {
+    this.setState({ selectedAudio: data });
+  }
+
   handleInitFiles(e) {
     const { files } = this.state;
     const { initMainFiles } = this.props;
@@ -134,8 +151,12 @@ export default class Studio extends Component {
       timeLine,
       processingAudios,
       currentTime,
+      selectedAudio,
+      filterTypes,
     } = this.state;
     console.log(files);
+
+    const { frequencies } = this.props.mainData;
 
     return (
       <div className="Studio c centr">
@@ -186,6 +207,81 @@ export default class Studio extends Component {
               />
             )}
           </div>
+          <div
+            className="block c"
+            style={{
+              width: "550px",
+              background: `${
+                selectedAudio
+                  ? `rgba(${selectedAudio.color.r},${selectedAudio.color.g},${selectedAudio.color.b}, 0.7 )`
+                  : "none"
+              }`,
+            }}>
+            <span>For: {selectedAudio?.name || "All"} </span>
+            <div className="r">
+              <div className="c eqz-erapper">
+                {frequencies?.map((e, i) => (
+                  <div className="r big-wrapper">
+                    <div className="inp-wrapper" style={{ width: "350px" }}>
+                      <span className="inp-subval">
+                        {selectedAudio ? selectedAudio.eqvVals[i] : 0}
+                      </span>
+                      <input
+                        type="range"
+                        value={selectedAudio ? selectedAudio.eqvVals[i] : 0}
+                        max="10"
+                        min="-10"
+                        step="1"
+                        style={{ width: "250px", margin: "10px" }}
+                        onChange={(evt) => {
+                          if (selectedAudio) {
+                            selectedAudio.filters[i].gain.value =
+                              evt.target.value;
+
+                            selectedAudio.eqvVals[i] = evt.target.value;
+                            this.setState({ selectedAudio });
+                          }
+                        }}
+                      />
+                      <span style={{ marginLeft: "5px" }}>
+                        {frequencies[i].toString().length > 3
+                          ? frequencies[i]
+                              .toString()
+                              .slice(
+                                0,
+                                Math.trunc(
+                                  frequencies[i].toString().length / 2.5
+                                )
+                              ) + "k"
+                          : frequencies[i]}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <select
+                className="browser-default"
+                onChange={(evt) => {
+                  if (selectedAudio) {
+                    selectedAudio.filters.forEach(
+                      (e) => (e.type = evt.target.value)
+                    );
+                    selectedAudio.typeF = evt.target.value;
+                    this.setState({ selectedAudio });
+                  }
+                }}>
+                {filterTypes.map((e) =>
+                  selectedAudio?.typeF === e ? (
+                    <option value={e} selected>
+                      {e}
+                    </option>
+                  ) : (
+                    <option value={e}>{e}</option>
+                  )
+                )}
+              </select>
+            </div>
+          </div>
         </div>
         <div className="c duration-bar block">
           <div className="c" style={{ position: "sticky", top: "0%" }}>
@@ -225,6 +321,7 @@ export default class Studio extends Component {
                 deleteProcessingFile={this.deleteProcessingFile}
                 deleteProcessingAudio={this.deleteProcessingAudio}
                 initProcessingAudios={this.initProcessingAudios}
+                setSelectedAudio={this.setSelectedAudio}
               />
             ))}
         </div>

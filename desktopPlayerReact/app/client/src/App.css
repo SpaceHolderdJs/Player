@@ -14,6 +14,10 @@ input {
   font-family: "Cabin", sans-serif;
 }
 
+input[type="range"] + .thumb {
+  display: none;
+}
+
 .App {
   width: 100%;
   display: flex;
@@ -440,10 +444,11 @@ option {
 .Studio .block {
   border: 2px solid teal;
   border-radius: 10px;
-  height: 40vh;
+  height: 320px;
   margin: 5px;
   padding: 10px;
   background-color: rgba(0, 0, 0, 0.5);
+  transition: 0.3s all;
 }
 
 .Studio .files-block {

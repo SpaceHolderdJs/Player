@@ -155,10 +155,10 @@ export default class Main extends Component {
 
       // listeners
 
-      window.addEventListener("mousemove", (e) => {
-        camera.position.x += (-e.pageX + window.innerWidth / 2) / 50000;
-        camera.position.y += (-e.pageY + window.innerHeight / 2) / 50000;
-      });
+      // window.addEventListener("mousemove", (e) => {
+      //   camera.position.x += (-e.pageX + window.innerWidth / 2) / 50000;
+      //   camera.position.y += (-e.pageY + window.innerHeight / 2) / 50000;
+      // });
 
       window.addEventListener("resize", function () {
         camera.aspect = window.innerWidth / window.innerHeight;

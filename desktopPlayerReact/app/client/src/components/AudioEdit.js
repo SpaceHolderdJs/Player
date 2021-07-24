@@ -17,6 +17,7 @@ export default class AudioEdit extends Component {
       cutting: false,
       loading: false,
       format: null,
+      frequencies: [60, 170, 310, 600, 1000, 3000, 6000, 12000, 14000, 16000],
     };
 
     this.cut = this.cut.bind(this);
@@ -53,6 +54,37 @@ export default class AudioEdit extends Component {
     this.analyser.connect(this.audioCtx.destination);
 
     const freqs = new Uint8Array(this.analyser.frequencyBinCount);
+
+    const { frequencies } = this.state;
+
+    const createFilter = (frequency) => {
+      const filter = this.audioCtx.createBiquadFilter();
+
+      filter.type = "peaking";
+      filter.frequency.value = frequency;
+      filter.Q.value = 1;
+      filter.gain.value = 0;
+
+      return filter;
+    };
+
+    const createFilters = () => {
+      const filters = frequencies.map(createFilter);
+
+      filters.reduce((prev, curr) => {
+        prev.connect(curr);
+        return curr;
+      });
+
+      return filters;
+    };
+
+    const filters = createFilters();
+
+    this.source.connect(filters[0]);
+    filters[filters.length - 1].connect(this.audioCtx.destination);
+
+    this.setState({ filters: filters });
 
     const animate = () => {
       this.animation = requestAnimationFrame(animate);
@@ -216,6 +248,29 @@ export default class AudioEdit extends Component {
               }
             }}>
             play_arrow
+          </i>
+          <i
+            className="material-icons tools"
+            style={{
+              fontSize: "15px",
+              cursor: "pointer",
+            }}
+            onClick={() => {
+              const { setSelectedAudio, file } = this.props;
+              const { filters, color } = this.state;
+
+              const eqvVals = [];
+              filters.forEach((e) => eqvVals.push(e.gain.value));
+
+              setSelectedAudio({
+                filters,
+                name: file.name,
+                color,
+                eqvVals,
+                typeF: filters[0].type,
+              });
+            }}>
+            equalizer
           </i>
           <i
             className="material-icons tools"
