@@ -30,86 +30,91 @@ export default class AudioEdit extends Component {
     const { file, initProcessingAudios } = this.props;
 
     this.audio.onloadedmetadata = () => {
-      initProcessingAudios(this.audio);
       this.setState({
         duration: Math.floor(this.audio.duration),
         start: this.audio.currentTime,
         end: Math.floor(this.audio.duration),
       });
-    };
 
-    this.pins = [];
-    this.pins.length = 150;
-    this.pins.fill(0);
+      this.pins = [];
+      this.pins.length = 150;
+      this.pins.fill(0);
 
-    this.audioCtx = new AudioContext();
-    this.analyser = this.audioCtx.createAnalyser();
-    this.analyser.fftSize = 2048;
+      this.audioCtx = new AudioContext();
+      this.analyser = this.audioCtx.createAnalyser();
+      this.analyser.fftSize = 2048;
 
-    this.source = this.audio
-      ? this.audioCtx.createMediaElementSource(this.audio)
-      : null;
+      this.source = this.audio
+        ? this.audioCtx.createMediaElementSource(this.audio)
+        : null;
 
-    this.source.connect(this.analyser);
-    this.analyser.connect(this.audioCtx.destination);
+      this.source.connect(this.analyser);
+      this.analyser.connect(this.audioCtx.destination);
 
-    const freqs = new Uint8Array(this.analyser.frequencyBinCount);
-
-    const { frequencies } = this.state;
-
-    const createFilter = (frequency) => {
-      const filter = this.audioCtx.createBiquadFilter();
-
-      filter.type = "peaking";
-      filter.frequency.value = frequency;
-      filter.Q.value = 1;
-      filter.gain.value = 0;
-
-      return filter;
-    };
-
-    const createFilters = () => {
-      const filters = frequencies.map(createFilter);
-
-      filters.reduce((prev, curr) => {
-        prev.connect(curr);
-        return curr;
+      initProcessingAudios({
+        audio: this.audio,
+        analyser: this.analyser,
+        color: this.state.color,
       });
 
-      return filters;
-    };
+      const freqs = new Uint8Array(this.analyser.frequencyBinCount);
 
-    const filters = createFilters();
+      const { frequencies } = this.state;
 
-    this.source.connect(filters[0]);
-    filters[filters.length - 1].connect(this.audioCtx.destination);
+      const createFilter = (frequency) => {
+        const filter = this.audioCtx.createBiquadFilter();
 
-    this.setState({ filters: filters });
+        filter.type = "peaking";
+        filter.frequency.value = frequency;
+        filter.Q.value = 1;
+        filter.gain.value = 0;
 
-    const animate = () => {
-      this.animation = requestAnimationFrame(animate);
+        return filter;
+      };
 
-      if (this.audio && !this.audio.paused) {
-        this.analyser.getByteFrequencyData(freqs);
-        const { end, start } = this.state;
+      const createFilters = () => {
+        const filters = frequencies.map(createFilter);
 
-        if (end && +this.audio.currentTime.toFixed(0) === end) {
-          this.audio.pause();
-          this.audio.currentTime = start || 0;
+        filters.reduce((prev, curr) => {
+          prev.connect(curr);
+          return curr;
+        });
+
+        return filters;
+      };
+
+      const filters = createFilters();
+
+      this.source.connect(filters[0]);
+      filters[filters.length - 1].connect(this.audioCtx.destination);
+
+      this.setState({ filters: filters });
+
+      const animate = () => {
+        this.animation = requestAnimationFrame(animate);
+
+        if (this.audio && !this.audio.paused) {
+          this.analyser.getByteFrequencyData(freqs);
+          const { end, start } = this.state;
+
+          if (end && +this.audio.currentTime.toFixed(0) === end) {
+            this.audio.pause();
+            this.audio.currentTime = start || 0;
+          }
+
+          freqs
+            .slice(0, 150)
+            .forEach(
+              (e, i) =>
+                (this.pinsParent.children[i].style.height = `${Math.floor(
+                  e / 5
+                )}px`)
+            );
         }
+      };
 
-        freqs
-          .slice(0, 150)
-          .forEach(
-            (e, i) =>
-              (this.pinsParent.children[i].style.height = `${Math.floor(
-                e / 5
-              )}px`)
-          );
-      }
+      animate();
     };
-
-    animate();
   }
 
   selectFormat(e) {

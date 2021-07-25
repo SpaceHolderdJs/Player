@@ -1,8 +1,6 @@
 import React, { Component } from "react";
 import { Line } from "react-chartjs-2";
 
-import * as THREE from "three";
-
 import Playlist from "./Playlist";
 import Songs from "./Songs";
 import TrackInfo from "./TrackInfo";

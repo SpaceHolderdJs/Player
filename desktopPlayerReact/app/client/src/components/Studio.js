@@ -3,6 +3,8 @@ import React, { Component } from "react";
 import Section from "./Section";
 import AudioEdit from "./AudioEdit";
 
+import { Line } from "react-chartjs-2";
+
 export default class Studio extends Component {
   constructor(props) {
     super(props);
@@ -55,19 +57,50 @@ export default class Studio extends Component {
       timeLine.push(i);
     }
 
+    const timeLinear = [];
+
+    timeLine.forEach((e, i) => i % 15 === 0 && timeLinear.push(e));
+    this.setState({ timeLinear });
+
     this.interval = setInterval(() => {
       const { processingAudios } = this.state;
 
       if (
         processingAudios.length > 0 &&
-        processingAudios.filter((e) => !e.paused).length > 0
+        processingAudios.filter((e) => !e.audio.paused).length > 0
       )
         this.timeLineInput.value = processingAudios.sort(
-          (e1, e2) => e1.duration - e2.duraton
-        )[0].currentTime;
+          (e1, e2) => e1.audio.duration - e2.audio.duraton
+        )[0].audio.currentTime;
     }, 50);
 
     this.setState({ timeLine });
+
+    const animate = () => {
+      this.animation = requestAnimationFrame(animate);
+
+      const { processingAudios } = this.state;
+
+      if (processingAudios && processingAudios.length > 0) {
+        if (this.charts) {
+          processingAudios
+            .filter((e) => !e.audio.paused)
+            .forEach((e, indx) => {
+              const freqs = new Uint8Array(e.analyser.frequencyBinCount);
+              e.analyser.getByteFrequencyData(freqs);
+
+              const newData = freqs.filter((e, i) => i % 6 === 0).slice(0, 9);
+              newData.forEach(
+                (e, i) => (this.charts.data.datasets[indx].data[i] = e)
+              );
+
+              this.charts.update("active");
+            });
+        }
+      }
+    };
+
+    animate();
   }
 
   componentDidUpdate() {
@@ -88,7 +121,9 @@ export default class Studio extends Component {
   playAllSongs() {
     const { processingAudios } = this.state;
     processingAudios.length > 0
-      ? processingAudios.forEach((e) => (e.paused ? e.play() : e.pause()))
+      ? processingAudios.forEach((e) =>
+          e.audio.paused ? e.audio.play() : e.audio.pause()
+        )
       : window.M.toast({ html: "Nothing to play" });
   }
 
@@ -99,10 +134,15 @@ export default class Studio extends Component {
   }
 
   deleteProcessingFile(file) {
-    const { processingFiles } = this.state;
+    const { processingFiles, selectedAudio } = this.state;
     const finalFiles = processingFiles.find((e) => e.name === file.name)
       ? processingFiles.filter((e) => e.name !== file.name)
       : processingFiles;
+
+    if (selectedAudio && selectedAudio.name === file.name) {
+      this.setState({ selectedAudio: null });
+    }
+
     this.setState({ processingFiles: finalFiles });
   }
 
@@ -112,11 +152,12 @@ export default class Studio extends Component {
     this.setState({ processingAudios: processingAudios });
   }
 
-  deleteProcessingAudio(audio) {
+  deleteProcessingAudio(data) {
     const { processingAudios } = this.state;
-    processingAudios.find((e) => e.src === audio.src)?.pause();
-    const finalAudios = processingAudios.find((e) => e.src === audio.src)
-      ? processingAudios.filter((e) => e.src !== audio.src)
+    //data == audioElement
+    processingAudios.find((e) => e.audio.src === data.src)?.audio.pause();
+    const finalAudios = processingAudios.find((e) => e.audio.src === data.src)
+      ? processingAudios.filter((e) => e.audio.src !== data.src)
       : processingAudios;
     this.setState({ processingAudios: finalAudios });
   }
@@ -153,6 +194,7 @@ export default class Studio extends Component {
       currentTime,
       selectedAudio,
       filterTypes,
+      timeLinear,
     } = this.state;
     console.log(files);
 
@@ -282,9 +324,70 @@ export default class Studio extends Component {
               </select>
             </div>
           </div>
+          <div className="block c centr" style={{ width: "500px" }}>
+            <h5 className="r centr">
+              <i className="material-icons">equalizer</i>Frequencies (hz)
+            </h5>
+            <Line
+              ref={(e) => (this.charts = e)}
+              data={{
+                labels: frequencies,
+                datasets:
+                  processingAudios && processingAudios.length > 0
+                    ? processingAudios.map((e, i) => {
+                        return {
+                          label: processingFiles[i].name,
+                          fill: true,
+                          borderColor: `rgba(${processingAudios[i].color.r},${processingAudios[i].color.g},${processingAudios[i].color.b} ,0.7)`,
+                          backgroundColor: `rgba(${
+                            processingAudios[i].color.r + 10
+                          },${processingAudios[i].color.g + 10},${
+                            processingAudios[i].color.b + 10
+                          } ,0.7)`,
+                          data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                          borderWidth: 1,
+                        };
+                      })
+                    : [
+                        {
+                          label: "Dynamic frequinses",
+                          fill: true,
+                          borderColor: "teal",
+                          backgroundColor: "aqua",
+                          data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                          borderWidth: 1,
+                        },
+                      ],
+              }}
+              height={70}
+              width={150}
+              options={{
+                responsive: true,
+                layout: {
+                  padding: 10,
+                },
+                scales: {
+                  yAxes: [
+                    {
+                      ticks: {
+                        beginAtZero: false,
+                      },
+                    },
+                  ],
+                },
+                maintainAspectRatio: true,
+              }}
+            />
+          </div>
         </div>
         <div className="c duration-bar block">
-          <div className="c" style={{ position: "sticky", top: "0%" }}>
+          <div
+            className="c"
+            style={{
+              position: "sticky",
+              top: "0%",
+              background: "rgba(0,0,0,0.5)",
+            }}>
             <div className="r">
               <i
                 className="material-icons"
@@ -292,6 +395,26 @@ export default class Studio extends Component {
                 style={{ cursor: "pointer" }}>
                 {processingAudios[0]?.paused ? "pause" : "play_arrow"}
               </i>
+            </div>
+            <div
+              className="r"
+              style={{
+                width: "6000px",
+                justifyContent: "space-between",
+              }}>
+              {timeLinear?.map((e) => (
+                <span
+                  className="r centr"
+                  style={{
+                    width: "15px",
+                    fontSize: "10px",
+                  }}>
+                  {Math.trunc(e / 60).toString().length > 1
+                    ? Math.trunc(e / 60)
+                    : `0${Math.trunc(e / 60)}`}
+                  :{(e % 60).toString().length > 1 ? e % 60 : `0${e % 60}`}
+                </span>
+              ))}
             </div>
             <div className="r" style={{ width: "6000px" }}>
               {timeLine?.map((e, i) => (

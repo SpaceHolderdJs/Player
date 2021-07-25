@@ -153,17 +153,21 @@ button {
 }
 
 .Playlist-full::-webkit-scrollbar,
-.song-section::-webkit-scrollbar {
+.song-section::-webkit-scrollbar,
+.Studio .duration-bar::-webkit-scrollbar {
   width: 5px;
+  height: 5px;
 }
 
 .Playlist-full::-webkit-scrollbar-track,
-.song-section::-webkit-scrollbar-track {
+.song-section::-webkit-scrollbar-track,
+.Studio .duration-bar::-webkit-scrollbar-track {
   box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
 }
 
 .Playlist-full::-webkit-scrollbar-thumb,
-.song-section::-webkit-scrollbar-thumb {
+.song-section::-webkit-scrollbar-thumb,
+.Studio .duration-bar::-webkit-scrollbar-thumb {
   background-color: teal;
   outline: 1px solid turquoise;
   border-radius: 10px;
@@ -569,4 +573,15 @@ option {
   color: white;
   border-radius: 50%;
   border: none;
+}
+
+.Studio canvas {
+  position: relative;
+  width: 450px !important;
+  height: 200px !important;
+  margin: 1vw;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 3;
+  border-radius: 10px;
+  box-shadow: 0px 0px 15px 3px aqua;
 }
