@@ -30,6 +30,24 @@ input[type="range"] + .thumb {
   flex-direction: column;
 }
 
+.Main .sidenav {
+  box-shadow: 0px 0px 15px 5px teal;
+}
+
+.Main .sidenav .item {
+  transition: 0.3s all;
+}
+
+.Main .sidenav .item:hover {
+  color: aqua;
+}
+
+.Main .user-bg {
+  transition: 0.3s all;
+  background-position: 30% 100% !important;
+  background-size: 110% 110% !important;
+}
+
 .Main header {
   width: 100%;
   display: flex;
@@ -62,10 +80,6 @@ input[type="range"] + .thumb {
   color: aqua;
   transform: scale(1.05);
 }
-
-/* .Main header .r button {
-  margin-right: 10px;
-} */
 
 input {
   width: 45vw;

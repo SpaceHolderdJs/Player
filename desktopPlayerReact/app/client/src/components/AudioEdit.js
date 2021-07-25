@@ -35,86 +35,85 @@ export default class AudioEdit extends Component {
         start: this.audio.currentTime,
         end: Math.floor(this.audio.duration),
       });
+    };
+    this.pins = [];
+    this.pins.length = 150;
+    this.pins.fill(0);
 
-      this.pins = [];
-      this.pins.length = 150;
-      this.pins.fill(0);
+    this.audioCtx = new AudioContext();
+    this.analyser = this.audioCtx.createAnalyser();
+    this.analyser.fftSize = 2048;
 
-      this.audioCtx = new AudioContext();
-      this.analyser = this.audioCtx.createAnalyser();
-      this.analyser.fftSize = 2048;
+    this.source = this.audio
+      ? this.audioCtx.createMediaElementSource(this.audio)
+      : null;
 
-      this.source = this.audio
-        ? this.audioCtx.createMediaElementSource(this.audio)
-        : null;
+    this.source.connect(this.analyser);
+    this.analyser.connect(this.audioCtx.destination);
 
-      this.source.connect(this.analyser);
-      this.analyser.connect(this.audioCtx.destination);
+    initProcessingAudios({
+      audio: this.audio,
+      analyser: this.analyser,
+      color: this.state.color,
+    });
 
-      initProcessingAudios({
-        audio: this.audio,
-        analyser: this.analyser,
-        color: this.state.color,
+    const freqs = new Uint8Array(this.analyser.frequencyBinCount);
+
+    const { frequencies } = this.state;
+
+    const createFilter = (frequency) => {
+      const filter = this.audioCtx.createBiquadFilter();
+
+      filter.type = "peaking";
+      filter.frequency.value = frequency;
+      filter.Q.value = 1;
+      filter.gain.value = 0;
+
+      return filter;
+    };
+
+    const createFilters = () => {
+      const filters = frequencies.map(createFilter);
+
+      filters.reduce((prev, curr) => {
+        prev.connect(curr);
+        return curr;
       });
 
-      const freqs = new Uint8Array(this.analyser.frequencyBinCount);
-
-      const { frequencies } = this.state;
-
-      const createFilter = (frequency) => {
-        const filter = this.audioCtx.createBiquadFilter();
-
-        filter.type = "peaking";
-        filter.frequency.value = frequency;
-        filter.Q.value = 1;
-        filter.gain.value = 0;
-
-        return filter;
-      };
-
-      const createFilters = () => {
-        const filters = frequencies.map(createFilter);
-
-        filters.reduce((prev, curr) => {
-          prev.connect(curr);
-          return curr;
-        });
-
-        return filters;
-      };
-
-      const filters = createFilters();
-
-      this.source.connect(filters[0]);
-      filters[filters.length - 1].connect(this.audioCtx.destination);
-
-      this.setState({ filters: filters });
-
-      const animate = () => {
-        this.animation = requestAnimationFrame(animate);
-
-        if (this.audio && !this.audio.paused) {
-          this.analyser.getByteFrequencyData(freqs);
-          const { end, start } = this.state;
-
-          if (end && +this.audio.currentTime.toFixed(0) === end) {
-            this.audio.pause();
-            this.audio.currentTime = start || 0;
-          }
-
-          freqs
-            .slice(0, 150)
-            .forEach(
-              (e, i) =>
-                (this.pinsParent.children[i].style.height = `${Math.floor(
-                  e / 5
-                )}px`)
-            );
-        }
-      };
-
-      animate();
+      return filters;
     };
+
+    const filters = createFilters();
+
+    this.source.connect(filters[0]);
+    filters[filters.length - 1].connect(this.audioCtx.destination);
+
+    this.setState({ filters: filters });
+
+    const animate = () => {
+      this.animation = requestAnimationFrame(animate);
+
+      if (this.audio && !this.audio.paused) {
+        this.analyser.getByteFrequencyData(freqs);
+        const { end, start } = this.state;
+
+        if (end && +this.audio.currentTime.toFixed(0) === end) {
+          this.audio.pause();
+          this.audio.currentTime = start || 0;
+        }
+
+        freqs
+          .slice(0, 150)
+          .forEach(
+            (e, i) =>
+              (this.pinsParent.children[i].style.height = `${Math.floor(
+                e / 5
+              )}px`)
+          );
+      }
+    };
+
+    animate();
   }
 
   selectFormat(e) {
@@ -126,7 +125,7 @@ export default class AudioEdit extends Component {
   }
 
   saveFile() {
-    const { file } = this.props;
+    const { file, user } = this.props;
     const { start, end, format } = this.state;
 
     ipcRenderer.send("saveFile", {
@@ -143,6 +142,16 @@ export default class AudioEdit extends Component {
       console.log("!!", files);
       this.setState({ loading: false });
       window.M.toast({ html: "Track was saved " });
+
+      fetch(`/api/score`, {
+        method: "POST",
+        body: JSON.stringify(user.user),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+        .then((response) => response.json())
+        .then((bdUser) => user.setUser(bdUser.user));
     });
 
     ipcRenderer.on("error", (event, message) => {

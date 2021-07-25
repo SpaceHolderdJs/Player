@@ -1,9 +1,11 @@
 import React, { Component } from "react";
 import * as THREE from "three";
+import { Bar } from "react-chartjs-2";
 import { OBJLoader } from "../../node_modules/three/examples/jsm/loaders/OBJLoader";
 
 import texture from "../../src/img/tiles.png";
 import statue from "../../src/img/statue.obj";
+import userBg from "../../src/img/userBg.jpg";
 
 import User from "./User";
 import Player from "./Player";
@@ -23,6 +25,7 @@ export default class Main extends Component {
     this.handleAuth = this.handleAuth.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
     this.hadleLogout = this.hadleLogout.bind(this);
+    this.setUser = this.setUser.bind(this);
     this.handleModuleSwitch = this.handleModuleSwitch.bind(this);
     this.handleRegister = this.handleRegister.bind(this);
     this.handleCheck = this.handleCheck.bind(this);
@@ -246,11 +249,28 @@ export default class Main extends Component {
 
       animate();
     }
+
+    fetch(`/api/allUsers`, {
+      method: "POST",
+      body: JSON.stringify({ q: 5 }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => response.json())
+      .then((users) => {
+        this.setState({ users: users.users });
+        this.charts?.update();
+      });
   }
 
   componentDidUpdate() {
     const actionB = document.querySelectorAll("select");
     window.M.FloatingActionButton.init(actionB, {});
+  }
+
+  setUser(user) {
+    this.setState({ user });
   }
 
   handleCheck(e) {
@@ -335,8 +355,13 @@ export default class Main extends Component {
   }
 
   render() {
-    const { module, user, tab } = this.state;
+    const { module, user, users, tab } = this.state;
     const { files, frequencies, filters } = this.state;
+
+    console.log(users);
+
+    const usersNames = users ? users.map((e) => `${e.name} ${e.surname}`) : [];
+    const usersValues = users ? users.map((e) => +e.score) : [0, 0, 0, 0, 0];
 
     const filteredFiles = [];
     files.forEach(
@@ -455,6 +480,126 @@ export default class Main extends Component {
           </div>
         ) : (
           <div>
+            {user && (
+              <div>
+                <ul
+                  id="slide-out"
+                  className="sidenav"
+                  style={{ background: "black" }}>
+                  <li>
+                    <div className="user-view">
+                      <div
+                        className="background user-bg"
+                        style={{ background: `url(${userBg})` }}></div>
+                      <a href="#user">
+                        {user.img ? (
+                          <img className="circle" src="images/yuna.jpg" />
+                        ) : (
+                          <i
+                            className="material-icons"
+                            style={{ fontSize: "60px" }}>
+                            account_circle
+                          </i>
+                        )}
+                      </a>
+                      <a href="#name">
+                        <span className="white-text name">
+                          {user.name} {user.surname}
+                        </span>
+                      </a>
+                      <a href="#email">
+                        <span className="white-text email">{user.email}</span>
+                      </a>
+                    </div>
+                  </li>
+                  <li>
+                    <a
+                      href="#score"
+                      className="item"
+                      style={{ color: "white" }}>
+                      <i className="material-icons" style={{ color: "white" }}>
+                        show_chart
+                      </i>
+                      Score: {user.score}
+                    </a>
+                    <a
+                      href="#score"
+                      className="item"
+                      style={{ color: "white" }}>
+                      <i className="material-icons" style={{ color: "white" }}>
+                        bug_report
+                      </i>
+                      Feedback
+                    </a>
+                    <a
+                      href="#score"
+                      className="item"
+                      style={{ color: "white" }}>
+                      <i className="material-icons" style={{ color: "white" }}>
+                        settings
+                      </i>
+                      Settings
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#!">Second Link</a>
+                  </li>
+                  <li>
+                    <Bar
+                      style={{
+                        position: "relative",
+                        background: `url(${userBg})`,
+                        backgroundSize: "cover",
+                      }}
+                      ref={(e) => (this.charts = e)}
+                      data={{
+                        labels: usersNames,
+                        datasets: [
+                          {
+                            label: "Most active users",
+                            fill: true,
+                            borderColor: "aqua",
+                            backgroundColor: "aqua",
+                            data: usersValues,
+                            borderWidth: 1,
+                            borderRadius: 35,
+                          },
+                        ],
+                      }}
+                      height={100}
+                      width={100}
+                      options={{
+                        responsive: true,
+                        layout: {
+                          padding: 10,
+                        },
+                        scales: {
+                          yAxes: [
+                            {
+                              ticks: {
+                                beginAtZero: false,
+                              },
+                            },
+                          ],
+                        },
+                        maintainAspectRatio: false,
+                      }}
+                    />
+                  </li>
+                </ul>
+                <i
+                  style={{
+                    cursor: "pointer",
+                    position: "absolute",
+                    top: "30px",
+                    left: "10px",
+                  }}
+                  data-target="slide-out"
+                  className="sidenav-trigger material-icons">
+                  menu
+                </i>
+              </div>
+            )}
             <header className="nav-wrapper">
               {user && <User user={user} />}
               <ul className="r centr">
@@ -496,6 +641,7 @@ export default class Main extends Component {
               <Studio
                 initMainFiles={this.handleFilesInit}
                 files={filteredFiles}
+                user={{ user, setUser: this.setUser }}
                 mainData={{
                   audio: this.audio,
                   frequencies,

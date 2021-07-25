@@ -5,6 +5,7 @@ const schema = new mongoose.Schema({
   password: { type: String, required: true },
   name: { type: String, required: true },
   surname: { type: String, required: true },
+  score: { type: Number, required: false },
 });
 
 module.exports = mongoose.model("User", schema);

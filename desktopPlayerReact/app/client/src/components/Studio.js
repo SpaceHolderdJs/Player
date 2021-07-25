@@ -199,6 +199,7 @@ export default class Studio extends Component {
     console.log(files);
 
     const { frequencies } = this.props.mainData;
+    const { user } = this.props;
 
     return (
       <div className="Studio c centr">
@@ -322,6 +323,21 @@ export default class Studio extends Component {
                   )
                 )}
               </select>
+              <button
+                style={{ margin: "10px", color: "aqua" }}
+                className="btn waves-effect black"
+                onClick={() => {
+                  if (selectedAudio) {
+                    selectedAudio.filters.forEach((e, i) => {
+                      e.gain.value = 0;
+                      selectedAudio.eqvVals[i] = 0;
+                    });
+                    window.M.toast({ html: "Equalizer settings was reloaded" });
+                    this.setState({ selectedAudio });
+                  }
+                }}>
+                <i className="material-icons">settings_backup_restore</i>
+              </button>
             </div>
           </div>
           <div className="block c centr" style={{ width: "500px" }}>
@@ -441,6 +457,7 @@ export default class Studio extends Component {
             processingFiles.map((e) => (
               <AudioEdit
                 file={e}
+                user={user}
                 deleteProcessingFile={this.deleteProcessingFile}
                 deleteProcessingAudio={this.deleteProcessingAudio}
                 initProcessingAudios={this.initProcessingAudios}

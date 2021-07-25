@@ -1,29 +1,16 @@
 import React, { Component } from "react";
 
 export default class User extends Component {
-  constructor(props) {
-    super(props);
-    this.state = { more: false };
-
-    this.handleMore = this.handleMore.bind(this);
-  }
-
-  handleMore() {
-    this.setState({ more: !this.state.more });
-  }
-
   render() {
     const { user } = this.props;
-    const { more } = this.state;
 
     return (
-      <div>
+      <div style={{ marginLeft: "30px" }}>
         {user && (
-          <h5 onClick={this.handleMore}>
+          <h5>
             {user.name} {user.surname}
           </h5>
         )}
-        {more && <h3>Some more info ...</h3>}
       </div>
     );
   }
