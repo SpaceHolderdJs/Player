@@ -73,4 +73,40 @@ router.post("/allUsers", async (req, res) => {
   });
 });
 
+const nodemailer = require("nodemailer");
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "studiomanagerhelper@gmail.com",
+    pass: "1999password1999",
+  },
+});
+
+router.post("/feedback", async (req, res) => {
+  const { email, name, text, priority } = req.body;
+
+  const mailOptions = {
+    from: "studiomanagerhelper@gmail.com",
+    to: email,
+    subject: "Studio support reply :)",
+    html: `
+            <p>Dear ${name}, we glad u to ask us about solution of ur problem.</p>
+            <p>We will do our best for you</p>
+            <p>Ur request below :</p>
+            <p>${text}</p>
+            <p>Priority:${priority ? priority : 10}</p>
+            <img src = "https://png.pngtree.com/thumb_back/fw800/background/20201012/pngtree-abstract-particle-equalizer-visualization-music-background-image_410675.jpg">
+          `,
+  };
+
+  transporter.sendMail(mailOptions, (err, info) => {
+    err && console.log(err);
+    res.json({
+      err: false,
+      msg: "Check your email",
+    });
+  });
+});
+
 module.exports = router;

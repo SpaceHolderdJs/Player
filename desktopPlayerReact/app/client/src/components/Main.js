@@ -32,13 +32,26 @@ export default class Main extends Component {
     this.handleChangeTab = this.handleChangeTab.bind(this);
     this.handleFilesInit = this.handleFilesInit.bind(this);
     this.handleSceneChange = this.handleSceneChange.bind(this);
+    this.handleFeedbackChange = this.handleFeedbackChange.bind(this);
+    this.handleFeedBackFinaly = this.handleFeedBackFinaly.bind(this);
   }
 
   componentDidMount() {
     // auth
 
-    localStorage.getItem("user") &&
-      this.setState({ user: JSON.parse(localStorage.getItem("user")) });
+    if (localStorage.getItem("user")) {
+      const user = JSON.parse(localStorage.getItem("user"));
+
+      this.setState({
+        user: user,
+      });
+
+      this.feedback = {
+        email: user.email,
+        name: user.name,
+        text: null,
+      };
+    }
 
     // THREE
 
@@ -250,6 +263,11 @@ export default class Main extends Component {
       animate();
     }
 
+    const modals = document.querySelectorAll(".modal");
+    window.M.Modal.init(modals);
+    const actionB = document.querySelectorAll("select");
+    window.M.FloatingActionButton.init(actionB, {});
+
     fetch(`/api/allUsers`, {
       method: "POST",
       body: JSON.stringify({ q: 5 }),
@@ -267,6 +285,37 @@ export default class Main extends Component {
   componentDidUpdate() {
     const actionB = document.querySelectorAll("select");
     window.M.FloatingActionButton.init(actionB, {});
+    const modals = document.querySelectorAll(".modal");
+    window.M.Modal.init(modals);
+  }
+
+  handleFeedbackChange(e) {
+    this.feedback[e.target.getAttribute("data-name")] = e.target.value;
+    e.target.value.length < 2
+      ? this.feedbackBtn.classList.add("disabled")
+      : this.feedbackBtn.classList.remove("disabled");
+  }
+
+  handleFeedBackFinaly() {
+    if (this.feedback.email && this.feedback.text) {
+      fetch("/api/feedback", {
+        method: "POST",
+        body: JSON.stringify(this.feedback),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          window.M.toast({ html: data.msg });
+          this.feedback.text = "";
+          [...this.feedbackInputs.children]
+            .slice(1)
+            .forEach((e) => (e.value = null));
+        });
+    } else {
+      window.M.toast({ html: "Fill all required data" });
+    }
   }
 
   setUser(user) {
@@ -372,6 +421,54 @@ export default class Main extends Component {
     return (
       <div className="Main">
         <audio ref={(e) => (this.audio = e)}></audio>
+        <div id="feedback" className="modal modal-fixed-footer">
+          <div
+            className="modal-content c centr"
+            style={{ background: `url(${userBg})` }}>
+            <h4>Feedback</h4>
+            <div
+              className="c center"
+              ref={(e) => (this.feedbackInputs = e)}
+              style={{ width: "100%" }}>
+              <input
+                type="text"
+                data-name="email"
+                value={user?.email}
+                onChange={this.handleFeedbackChange}
+              />
+              <input
+                type="text"
+                data-name="text"
+                placeholder="Describe your problem"
+                onChange={this.handleFeedbackChange}
+              />
+              <select data-name="priority">
+                <option value="" selected disabled>
+                  Select priority
+                </option>
+                <option value="10">High</option>
+                <option value="1">Low</option>
+              </select>
+            </div>
+            <p>You will get response on your email</p>
+            <button
+              ref={(e) => (this.feedbackBtn = e)}
+              className="btn waves-effect r centr modal-close disabled"
+              onClick={this.handleFeedBackFinaly}>
+              <i className="material-icons">mail</i>
+              Send
+            </button>
+          </div>
+          <div
+            className="modal-footer"
+            style={{ background: `url(${userBg})` }}>
+            <a
+              href="#!"
+              className="modal-close waves-effect waves-green btn-flat">
+              Close
+            </a>
+          </div>
+        </div>
         <div className="fixed-action-btn">
           <button className="btn-floating btn-large black">
             <i className="large material-icons">3d_rotation</i>
@@ -523,9 +620,15 @@ export default class Main extends Component {
                       Score: {user.score}
                     </a>
                     <a
-                      href="#score"
-                      className="item"
-                      style={{ color: "white" }}>
+                      href="#feedback"
+                      className="item modal-trigger"
+                      style={{ color: "white" }}
+                      onClick={() => {
+                        [...this.feedbackInputs.children]
+                          .slice(1)
+                          .forEach((e) => (e.value = null));
+                        this.feedbackBtn.classList.add("disabled");
+                      }}>
                       <i className="material-icons" style={{ color: "white" }}>
                         bug_report
                       </i>
@@ -559,7 +662,7 @@ export default class Main extends Component {
                             label: "Most active users",
                             fill: true,
                             borderColor: "aqua",
-                            backgroundColor: "aqua",
+                            backgroundColor: "rgba(10, 20, 200, 0.6)",
                             data: usersValues,
                             borderWidth: 1,
                             borderRadius: 35,

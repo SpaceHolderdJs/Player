@@ -5,11 +5,13 @@ import AudioEdit from "./AudioEdit";
 
 import { Line } from "react-chartjs-2";
 
+const { ipcRenderer } = window.require("electron");
+
 export default class Studio extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      sections: ["audios", "sounds"],
+      sections: ["audios", "sounds", "folder"],
       activeSection: "audios",
       files: [],
       processingFiles: [],
@@ -42,6 +44,9 @@ export default class Studio extends Component {
     this.handleTimeInputChange = this.handleTimeInputChange.bind(this);
 
     this.setSelectedAudio = this.setSelectedAudio.bind(this);
+
+    this.initAppFolderFiles = this.initAppFolderFiles.bind(this);
+    this.initProcess = this.initProcess.bind(this);
   }
 
   componentDidMount() {
@@ -100,12 +105,27 @@ export default class Studio extends Component {
       }
     };
 
+    ipcRenderer.send("scanFolder", "");
+
+    ipcRenderer.on("scanedFolder", (event, files) => {
+      console.log("files getted", files);
+      this.setState({ appFolderFiles: files });
+    });
+
     animate();
   }
 
   componentDidUpdate() {
     const inps = document.querySelectorAll("input[type=range]");
     window.M.Range.init(inps);
+  }
+
+  initAppFolderFiles(files) {
+    this.setState({ appFolderFiles: files });
+  }
+
+  initProcess(process) {
+    this.setState({ process });
   }
 
   handleTimeInputChange(e) {
@@ -181,7 +201,9 @@ export default class Studio extends Component {
     // initMainFiles(files);
   }
 
-  setActive() {}
+  setActive(e) {
+    this.setState({ activeSection: e.target.getAttribute("data-name") });
+  }
 
   render() {
     const {
@@ -195,6 +217,8 @@ export default class Studio extends Component {
       selectedAudio,
       filterTypes,
       timeLinear,
+      appFolderFiles,
+      process,
     } = this.state;
     console.log(files);
 
@@ -229,7 +253,7 @@ export default class Studio extends Component {
                   className={`crumb c centr waves-effect ${
                     activeSection === e && "active"
                   }`}
-                  name={e}
+                  data-name={e}
                   onClick={this.setActive}>
                   {e[0].toUpperCase() + e.slice(1, e.length)}
                 </div>
@@ -249,6 +273,21 @@ export default class Studio extends Component {
                 initProcessingFiles={this.initProcessingFiles}
               />
             )}
+            {activeSection === "folder" &&
+              (appFolderFiles ? (
+                <Section
+                  audio={this.audio}
+                  tracks={appFolderFiles}
+                  initProcessingFiles={this.initProcessingFiles}
+                />
+              ) : (
+                <div className="c centr">
+                  <h3>Initing...</h3>
+                  <div className="progress">
+                    <div className="indeterminate"></div>
+                  </div>
+                </div>
+              ))}
           </div>
           <div
             className="block c"
@@ -396,7 +435,11 @@ export default class Studio extends Component {
             />
           </div>
         </div>
-        <div className="c duration-bar block">
+        <div
+          className="c duration-bar block"
+          style={{
+            animation: `${process ? "processing 5s linear infinite" : "none"}`,
+          }}>
           <div
             className="c"
             style={{
@@ -462,6 +505,8 @@ export default class Studio extends Component {
                 deleteProcessingAudio={this.deleteProcessingAudio}
                 initProcessingAudios={this.initProcessingAudios}
                 setSelectedAudio={this.setSelectedAudio}
+                initAppFolderFiles={this.initAppFolderFiles}
+                initProcess={this.initProcess}
               />
             ))}
         </div>

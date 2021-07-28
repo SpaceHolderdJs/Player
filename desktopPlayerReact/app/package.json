@@ -52,15 +52,18 @@
   },
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "audio-context": "^1.0.3",
     "concurrently": "^6.2.0",
     "electron-squirrel-startup": "^1.0.0",
     "express": "^4.17.1",
     "ffmpeg": "^0.0.4",
     "fluent-ffmpeg": "^2.1.2",
+    "fluent-ffmpeg-filters": "^1.0.13",
     "materialize-css": "^1.0.0-rc.2",
     "mongoose": "^5.12.13",
     "mp3-cutter": "^1.0.6",
     "node-dir": "^0.1.17",
+    "nodemailer": "^6.6.3",
     "react-chartjs-2": "^3.0.3"
   }
 }

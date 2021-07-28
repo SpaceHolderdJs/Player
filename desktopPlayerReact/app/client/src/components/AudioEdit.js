@@ -83,12 +83,12 @@ export default class AudioEdit extends Component {
       return filters;
     };
 
-    const filters = createFilters();
+    this.filters = createFilters();
 
-    this.source.connect(filters[0]);
-    filters[filters.length - 1].connect(this.audioCtx.destination);
+    this.source.connect(this.filters[0]);
+    this.filters[this.filters.length - 1].connect(this.audioCtx.destination);
 
-    this.setState({ filters: filters });
+    this.setState({ filters: this.filters });
 
     const animate = () => {
       this.animation = requestAnimationFrame(animate);
@@ -134,13 +134,21 @@ export default class AudioEdit extends Component {
       start,
       end,
       format,
+      filterType: this.filters[0].type,
+      filterVals: this.filters.map((e) => e.gain.value),
     });
 
     this.setState({ loading: true });
 
     ipcRenderer.on("fileSaved", (event, files) => {
+      const { initAppFolderFiles, initProcess } = this.props;
+      initProcess(null);
       console.log("!!", files);
+
       this.setState({ loading: false });
+
+      initAppFolderFiles(files);
+
       window.M.toast({ html: "Track was saved " });
 
       fetch(`/api/score`, {
@@ -157,6 +165,11 @@ export default class AudioEdit extends Component {
     ipcRenderer.on("error", (event, message) => {
       window.M.toast({ html: message });
       this.setState({ loading: false });
+    });
+
+    ipcRenderer.on("process", (event, process) => {
+      const { initProcess } = this.props;
+      initProcess(process);
     });
 
     window.M.toast({ html: "Processing... " });

@@ -8,6 +8,7 @@ export default function Section(props) {
 
   const handleChane = (e) => {
     setValue(e.target.value);
+    console.log("!!!", tracks);
   };
 
   return (
