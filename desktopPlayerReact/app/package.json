@@ -63,6 +63,7 @@
     "mongoose": "^5.12.13",
     "mp3-cutter": "^1.0.6",
     "node-dir": "^0.1.17",
+    "node-localstorage": "^2.2.1",
     "nodemailer": "^6.6.3",
     "react-chartjs-2": "^3.0.3"
   }

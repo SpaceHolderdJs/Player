@@ -22,9 +22,7 @@ export default class Main extends Component {
       frequencies: [60, 170, 310, 600, 1000, 3000, 6000, 12000, 14000, 16000],
       tab: "player",
       files: [],
-      directory:
-        localStorage.getItem("directory") &&
-        JSON.parse(localStorage.getItem("directory")),
+      directory: localStorage.getItem("directory"),
     };
 
     this.handleAuth = this.handleAuth.bind(this);
@@ -39,6 +37,7 @@ export default class Main extends Component {
     this.handleSceneChange = this.handleSceneChange.bind(this);
     this.handleFeedbackChange = this.handleFeedbackChange.bind(this);
     this.handleFeedBackFinaly = this.handleFeedBackFinaly.bind(this);
+    this.handleChangePassword = this.handleChangePassword.bind(this);
   }
 
   componentDidMount() {
@@ -61,6 +60,17 @@ export default class Main extends Component {
     //directory
 
     const { directory } = this.state;
+
+    if (!directory) {
+      ipcRenderer.send("directoryInit", "");
+      ipcRenderer.on("directory", (event, dir) => {
+        console.log("!!", dir);
+        this.setState({ directory: dir });
+        localStorage.setItem("directory", dir);
+      });
+    } else {
+      console.log("!!!", directory);
+    }
 
     // THREE
 
@@ -286,7 +296,12 @@ export default class Main extends Component {
     })
       .then((response) => response.json())
       .then((users) => {
-        this.setState({ users: users.users });
+        const { user } = this.state;
+        this.setState({
+          users: users.users,
+          user: users.users.find((e) => e._id === user._id),
+        });
+
         this.charts?.update();
       });
   }
@@ -412,11 +427,40 @@ export default class Main extends Component {
     this.setState({ tab: e.target.getAttribute("data-name") });
   }
 
-  render() {
-    const { module, user, users, tab } = this.state;
-    const { files, frequencies, filters } = this.state;
+  handleChangePassword() {
+    const { user } = this.state;
+    console.log(user);
 
-    console.log(users);
+    const passwords = [...this.passwordParent.querySelectorAll("input")].map(
+      (e) => e.value
+    );
+
+    console.log(passwords);
+
+    if (passwords[0] === passwords[1]) {
+      fetch(`/api/password`, {
+        method: "POST",
+        body: JSON.stringify({ _id: user._id, password: passwords[0] }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+        .then((response) => response.json())
+        .then((res) => {
+          [...this.passwordParent.querySelectorAll("input")].forEach(
+            (e) => (e.value = "")
+          );
+          window.M.toast({ html: res.msg });
+          localStorage.setItem("user", "");
+        });
+    } else {
+      window.M.toast({ html: "Passwords are not same" });
+    }
+  }
+
+  render() {
+    const { module, user, users, tab, files, frequencies, filters, directory } =
+      this.state;
 
     const usersNames = users ? users.map((e) => `${e.name} ${e.surname}`) : [];
     const usersValues = users ? users.map((e) => +e.score) : [0, 0, 0, 0, 0];
@@ -492,15 +536,15 @@ export default class Main extends Component {
               <div
                 className="r"
                 style={{
-                  justifyContent: "space-between",
+                  justifyContent: "center",
                   width: "100%",
-                  border: "1px solid red",
                 }}>
-                <span>Directory: {}</span>
+                <span>Directory: {directory}</span>
                 <label
                   htmlFor="directory"
                   className="btn waves-effect btn-small label">
                   <i className="material-icons">folder</i>
+                  Change
                 </label>
                 <input
                   type="file"
@@ -508,7 +552,47 @@ export default class Main extends Component {
                   hidden
                   webkitdirectory="true"
                   multiple
+                  onChange={(e) => {
+                    if (e.target.files.length > 0) {
+                      const pathToDir = e.target.files[0].path
+                        .replace(e.target.files[0].name, "")
+                        .slice(0, e.target.files[0].path.length - 3);
+
+                      e.target.parentElement.querySelector(
+                        "span"
+                      ).textContent = `Directory:  ${pathToDir}`;
+
+                      ipcRenderer.send("directoryChange", pathToDir);
+                      ipcRenderer.on("directoryChanged", (evt, msg) => {
+                        window.M.toast({ html: msg });
+                      });
+
+                      localStorage.setItem("directory", pathToDir);
+                    } else {
+                      window.M.toast({ html: "Unable to use this directory" });
+                    }
+                  }}
                 />
+              </div>
+              <div className="divider"></div>
+              <div className="r centr">
+                <span>Color: </span>
+                <input type="color" style={{ border: "none" }} />
+              </div>
+              <div className="divider"></div>
+              <div className="c centr" ref={(e) => (this.passwordParent = e)}>
+                <span>Password</span>
+                <div className="r centr">
+                  <input type="text" placeholder="Enter new password" />
+                </div>
+                <div className="r centr">
+                  <input type="text" placeholder="Repeat new password" />
+                </div>
+                <button
+                  className="btn waves-effect"
+                  onClick={this.handleChangePassword}>
+                  Change
+                </button>
               </div>
             </div>
           </div>

@@ -30,6 +30,10 @@ input[type="range"] + .thumb {
   flex-direction: column;
 }
 
+.Main #settings .divider {
+  margin: 10px;
+}
+
 .Main .sidenav,
 .Main .modal {
   box-shadow: 0px 0px 15px 5px teal;

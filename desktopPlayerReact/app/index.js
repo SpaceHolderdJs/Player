@@ -8,6 +8,9 @@ const fs = require("fs");
 const express = require("express");
 const mongoose = require("mongoose");
 
+let LocalStorage = require("node-localstorage").LocalStorage;
+localStorage = new LocalStorage("./storage");
+
 const expressApp = express();
 
 expressApp.use(express.json({ extended: true }));
@@ -73,23 +76,36 @@ app.on("activate", () => {
 
 const { ipcMain } = require("electron");
 
-ipcMain.on("directotyInit", (event) => {
-  if (!fs.existsSync(path.join(os.homedir(), "audios"))) {
+ipcMain.on("directoryInit", (event) => {
+  if (
+    !fs.existsSync(path.join(os.homedir(), "audios")) &&
+    !localStorage.getItem("directory")
+  ) {
     fs.mkdir(path.join(os.homedir(), "audios"), (err) => {
       err && console.log(err);
       event.reply("directory", path.join(os.homedir(), "audios"));
     });
   } else {
-    event.reply("directory", path.join(os.homedir(), "audios"));
+    event.reply(
+      "directory",
+      localStorage.getItem("directory")
+        ? localStorage.getItem("directory")
+        : path.join(os.homedir(), "audios")
+    );
   }
+  localStorage.setItem("directory", path.join(os.homedir(), "audios"));
 });
 
-const folder = path.join(os.homedir(), "audios");
+ipcMain.on("directoryChange", (event, dir) => {
+  localStorage.setItem("directory", path.normalize(dir));
+  event.reply("directoryChanged", "Directory changed");
+});
 
 //scanning folder
 
 ipcMain.on("scanFolder", (event) => {
   const audios = [];
+  const folder = localStorage.getItem("directory");
   fs.readdir(folder, (err, files) => {
     err && console.log(err);
     files.forEach((e) =>
@@ -137,6 +153,7 @@ ipcMain.on("saveFile", (event, file) => {
       })
       .on("end", () => {
         const audios = [];
+        const folder = localStorage.getItem("directory");
         fs.readdir(folder, (err, files) => {
           err && console.log(err);
           files.forEach((e) =>
@@ -164,6 +181,7 @@ ipcMain.on("saveFile", (event, file) => {
     };
 
     const format = file.format ? file.format : formatWas;
+    const folder = localStorage.getItem("directory");
 
     const process = ffmpeg({
       source: path.normalize(file.path),
@@ -201,6 +219,7 @@ ipcMain.on("saveFile", (event, file) => {
       })
       .on("end", () => {
         const audios = [];
+        const folder = localStorage.getItem("directory");
         fs.readdir(folder, (err, files) => {
           err && console.log(err);
           files.forEach((e) =>

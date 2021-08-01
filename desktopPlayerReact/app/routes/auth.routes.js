@@ -109,4 +109,16 @@ router.post("/feedback", async (req, res) => {
   });
 });
 
+router.post("/password", async (req, res) => {
+  const { _id, password } = req.body;
+  const user = await User.findById(_id);
+  user.password = password;
+  await user.save();
+
+  return res.json({
+    err: false,
+    msg: "Password was changed",
+  });
+});
+
 module.exports = router;
