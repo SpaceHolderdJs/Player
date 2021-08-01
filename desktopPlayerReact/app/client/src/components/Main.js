@@ -11,6 +11,8 @@ import User from "./User";
 import Player from "./Player";
 import Studio from "./Studio";
 
+const { ipcRenderer } = window.require("electron");
+
 export default class Main extends Component {
   constructor(props) {
     super(props);
@@ -20,6 +22,9 @@ export default class Main extends Component {
       frequencies: [60, 170, 310, 600, 1000, 3000, 6000, 12000, 14000, 16000],
       tab: "player",
       files: [],
+      directory:
+        localStorage.getItem("directory") &&
+        JSON.parse(localStorage.getItem("directory")),
     };
 
     this.handleAuth = this.handleAuth.bind(this);
@@ -52,6 +57,10 @@ export default class Main extends Component {
         text: null,
       };
     }
+
+    //directory
+
+    const { directory } = this.state;
 
     // THREE
 
@@ -421,6 +430,7 @@ export default class Main extends Component {
     return (
       <div className="Main">
         <audio ref={(e) => (this.audio = e)}></audio>
+
         <div id="feedback" className="modal modal-fixed-footer">
           <div
             className="modal-content c centr"
@@ -458,6 +468,49 @@ export default class Main extends Component {
               <i className="material-icons">mail</i>
               Send
             </button>
+          </div>
+          <div
+            className="modal-footer"
+            style={{ background: `url(${userBg})` }}>
+            <a
+              href="#!"
+              className="modal-close waves-effect waves-green btn-flat">
+              Close
+            </a>
+          </div>
+        </div>
+
+        <div id="settings" className="modal modal-fixed-footer">
+          <div
+            className="modal-content c centr"
+            style={{ background: `url(${userBg})` }}>
+            <h4>Settings</h4>
+            <div
+              className="c center"
+              ref={(e) => (this.feedbackInputs = e)}
+              style={{ width: "100%" }}>
+              <div
+                className="r"
+                style={{
+                  justifyContent: "space-between",
+                  width: "100%",
+                  border: "1px solid red",
+                }}>
+                <span>Directory: {}</span>
+                <label
+                  htmlFor="directory"
+                  className="btn waves-effect btn-small label">
+                  <i className="material-icons">folder</i>
+                </label>
+                <input
+                  type="file"
+                  id="directory"
+                  hidden
+                  webkitdirectory="true"
+                  multiple
+                />
+              </div>
+            </div>
           </div>
           <div
             className="modal-footer"
@@ -635,8 +688,8 @@ export default class Main extends Component {
                       Feedback
                     </a>
                     <a
-                      href="#score"
-                      className="item"
+                      href="#settings"
+                      className="item modal-trigger"
                       style={{ color: "white" }}>
                       <i className="material-icons" style={{ color: "white" }}>
                         settings

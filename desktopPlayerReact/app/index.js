@@ -71,15 +71,20 @@ app.on("activate", () => {
 
 //initing folder for files
 
-if (!fs.existsSync(path.join(os.homedir(), "audios"))) {
-  fs.mkdir(path.join(os.homedir(), "audios"), (err) => {
-    err && console.log(err);
-  });
-}
+const { ipcMain } = require("electron");
+
+ipcMain.on("directotyInit", (event) => {
+  if (!fs.existsSync(path.join(os.homedir(), "audios"))) {
+    fs.mkdir(path.join(os.homedir(), "audios"), (err) => {
+      err && console.log(err);
+      event.reply("directory", path.join(os.homedir(), "audios"));
+    });
+  } else {
+    event.reply("directory", path.join(os.homedir(), "audios"));
+  }
+});
 
 const folder = path.join(os.homedir(), "audios");
-
-const { ipcMain } = require("electron");
 
 //scanning folder
 
