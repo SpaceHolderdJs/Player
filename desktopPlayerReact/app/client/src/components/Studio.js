@@ -14,6 +14,7 @@ export default class Studio extends Component {
       sections: ["audios", "sounds", "folder"],
       activeSection: "audios",
       files: [],
+      tracklist: [],
       processingFiles: [],
       processingAudios: [],
       currentTime: 0,
@@ -47,6 +48,10 @@ export default class Studio extends Component {
 
     this.initAppFolderFiles = this.initAppFolderFiles.bind(this);
     this.initProcess = this.initProcess.bind(this);
+
+    this.saveAllTracks = this.saveAllTracks.bind(this);
+    this.addToTracklist = this.addToTracklist.bind(this);
+    this.removeFromTrackList = this.removeFromTrackList.bind(this);
   }
 
   componentDidMount() {
@@ -203,6 +208,39 @@ export default class Studio extends Component {
 
   setActive(e) {
     this.setState({ activeSection: e.target.getAttribute("data-name") });
+  }
+
+  saveAllTracks() {
+    const { tracklist } = this.state;
+
+    console.log(tracklist);
+
+    ipcRenderer.send("saveAllTracks", {});
+
+    ipcRenderer.on("allTracksSaved", (resp) => {});
+  }
+
+  addToTracklist(track) {
+    const { tracklist } = this.state;
+    tracklist.push(track);
+    this.setState({ tracklist });
+  }
+
+  removeFromTrackList(track) {
+    const { tracklist } = this.state;
+
+    const newTracklist = tracklist.filter(
+      (e) =>
+        !Object.values(e)
+          .filter((e) => typeof e !== "object")
+          .every(
+            (el, i) =>
+              el ===
+              Object.values(track).filter((e) => typeof e !== "object")[i]
+          )
+    );
+
+    this.setState({ tracklist: newTracklist });
   }
 
   render() {
@@ -454,6 +492,13 @@ export default class Studio extends Component {
                 style={{ cursor: "pointer" }}>
                 {processingAudios[0]?.paused ? "pause" : "play_arrow"}
               </i>
+              <i
+                className="material-icons"
+                style={{ cursor: "pointer" }}
+                onClick={this.saveAllTracks}>
+                save
+              </i>
+              Global save
             </div>
             <div
               className="r"
@@ -507,6 +552,8 @@ export default class Studio extends Component {
                 setSelectedAudio={this.setSelectedAudio}
                 initAppFolderFiles={this.initAppFolderFiles}
                 initProcess={this.initProcess}
+                addToTracklist={this.addToTracklist}
+                removeFromTrackList={this.removeFromTrackList}
               />
             ))}
         </div>

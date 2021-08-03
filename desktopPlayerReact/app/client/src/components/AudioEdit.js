@@ -176,7 +176,13 @@ export default class AudioEdit extends Component {
   }
 
   render() {
-    const { file, deleteProcessingFile, deleteProcessingAudio } = this.props;
+    const {
+      file,
+      deleteProcessingFile,
+      deleteProcessingAudio,
+      addToTracklist,
+      removeFromTrackList,
+    } = this.props;
     const { duration, color, end, cutting, start, loading } = this.state;
 
     return (
@@ -227,6 +233,14 @@ export default class AudioEdit extends Component {
             onClick={() => {
               deleteProcessingFile(file);
               deleteProcessingAudio(this.audio);
+              removeFromTrackList({
+                path: file.path,
+                name: file.name,
+                start,
+                end,
+                filterType: this.filters[0].type,
+                filterVals: this.filters.map((e) => e.gain.value),
+              });
             }}>
             delete
           </i>
@@ -326,6 +340,7 @@ export default class AudioEdit extends Component {
             className="browser-default tools"
             style={{
               background: `rgba(${color.r},${color.g},${color.b}, 0.7)`,
+              marginRight: "5px",
             }}
             onChange={this.selectFormat}>
             <option value="mp3" selected>
@@ -335,6 +350,35 @@ export default class AudioEdit extends Component {
             <option value="wav">wav</option>
             <option value="ogg">ogg</option>
           </select>
+          <div className="r sp-block">
+            <div className="sp"></div>
+            <div className="switch">
+              <label>
+                <input
+                  type="checkbox"
+                  onChange={(e) => {
+                    const data = {
+                      path: file.path,
+                      name: file.name,
+                      start,
+                      end,
+                      filterType: this.filters[0].type,
+                      filterVals: this.filters.map((e) => e.gain.value),
+                    };
+                    !e.target.checked
+                      ? removeFromTrackList(data)
+                      : addToTracklist(data);
+                  }}
+                />
+                <span
+                  className="lever"
+                  style={{
+                    backgroundColor: `rgba(${color.r},${color.g},${color.b}, 0.7)`,
+                  }}></span>
+                <span style={{ color: "white" }}>Add to global save</span>
+              </label>
+            </div>
+          </div>
         </div>
         <div
           className="r pinsParent"

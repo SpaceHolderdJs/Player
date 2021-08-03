@@ -541,6 +541,16 @@ option {
   width: 5px;
 }
 
+.Studio .duration-bar .AudioEdit .sp {
+  width: 2px;
+  height: 35px;
+  background: teal;
+}
+
+.Studio .duration-bar .AudioEdit .sp-block {
+  background: linear-gradient(90deg, teal, rgba(0, 0, 0, 0));
+}
+
 .Studio .duration-bar .AudioEdit:hover {
   box-shadow: 0px 0px 2px 1px aqua, inset 0px 0px 5px 1px white;
 }
