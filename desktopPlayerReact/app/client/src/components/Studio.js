@@ -211,13 +211,19 @@ export default class Studio extends Component {
   }
 
   saveAllTracks() {
-    const { tracklist } = this.state;
+    const { tracklist, globalName } = this.state;
 
     console.log(tracklist);
 
-    ipcRenderer.send("saveAllTracks", {});
+    globalName
+      ? ipcRenderer.send("saveAllTracks", { tracklist, globalName })
+      : window.M.toast({ html: "Select name for future track" });
 
-    ipcRenderer.on("allTracksSaved", (resp) => {});
+    ipcRenderer.on("allTracksSaved", (resp, files) => {
+      this.setState({ appFolderFiles: files, globalName: null });
+    });
+
+    window.M.toast({ html: "Track was saved " });
   }
 
   addToTracklist(track) {
@@ -498,7 +504,14 @@ export default class Studio extends Component {
                 onClick={this.saveAllTracks}>
                 save
               </i>
-              Global save
+              <input
+                style={{ width: "200px", marginLeft: "10px" }}
+                type="text"
+                placeholder="Save as..."
+                onChange={(e) => {
+                  this.setState({ globalName: e.target.value });
+                }}
+              />
             </div>
             <div
               className="r"

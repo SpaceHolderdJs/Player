@@ -94,6 +94,11 @@ ipcMain.on("directoryInit", (event) => {
     );
   }
   localStorage.setItem("directory", path.join(os.homedir(), "audios"));
+  if (!fs.existsSync(path.join(path.dirname(), "tmp"))) {
+    fs.mkdir(path.join(path.dirname(), "tmp"), (err) => {
+      err && console.log(err);
+    });
+  }
 });
 
 ipcMain.on("directoryChange", (event, dir) => {
@@ -118,6 +123,19 @@ ipcMain.on("scanFolder", (event) => {
     console.log(audios, folder);
   });
 });
+
+const filters = {
+  peaking: "equalizer",
+  notch: "bandreject",
+  allpass: "allpass",
+  bandpass: "bandpass",
+  highpass: "highpass",
+  lowpass: "lowpass",
+  heighshelf: "heighshelf",
+  lowshelf: "lowshelf",
+};
+
+const freqs = [60, 170, 310, 600, 1000, 3000, 6000, 12000, 14000, 16000];
 
 //cutting file
 const MP3Cutter = require("mp3-cutter");
@@ -233,6 +251,85 @@ ipcMain.on("saveFile", (event, file) => {
         });
       });
   }
+});
+
+//Saving all tracks
+
+ipcMain.on("saveAllTracks", (event, data) => {
+  const { tracklist, globalName } = data;
+
+  console.log(tracklist);
+
+  tracklist.forEach((e, i) => {
+    const process = ffmpeg({ source: path.normalize(e.path) });
+
+    process.setStartTime(e.start || 0).setDuration(e.end - e.start);
+
+    e.filterType &&
+      process.audioFilters(
+        freqs.map((el, i) => {
+          const options = {
+            frequency: el,
+          };
+
+          if (!e.filterType.includes("pass")) {
+            options.gain = e.filterVals[i];
+          }
+
+          return {
+            filter: filters[e.filterType],
+            options,
+          };
+        })
+      );
+
+    process.toFormat("mp3").save(path.join(path.dirname(), "tmp", i, "mp3"));
+  });
+
+  const process = ffmpeg();
+
+  fs.readdir(path.join(path.dirname(), "tmp"), (err, files) => {
+    console.log("!!!", files);
+  });
+  // tracklist.forEach((e) => process.addInput(e.path));
+
+  const folder = localStorage.getItem("directory");
+
+  process
+    .toFormat("mp3")
+    .audioFilters(
+      freqs.map((el, i) => {
+        const options = {
+          frequency: el,
+        };
+
+        if (tracklist[0].filterType.includes("pass")) {
+          options.gain = tracklist[0].filterVals[i];
+        }
+
+        return {
+          filter: filters[tracklist[0].filterType],
+          options,
+        };
+      })
+    )
+    .complexFilter({ filter: "amix", duration: "" })
+    .save(path.join(folder, globalName + ".mp3"))
+    .on("end", () => {
+      const audios = [];
+      const folder = localStorage.getItem("directory");
+      fs.readdir(folder, (err, files) => {
+        err && console.log(err);
+        files.forEach((e) =>
+          audios.push({
+            name: path.basename(e),
+            path: path.join(folder, e),
+          })
+        );
+        event.reply("allTracksSaved", audios);
+        console.log(audios, folder);
+      });
+    });
 });
 
 // In this file you can include the rest of your app's specific main process
