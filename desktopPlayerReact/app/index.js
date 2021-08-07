@@ -94,11 +94,6 @@ ipcMain.on("directoryInit", (event) => {
     );
   }
   localStorage.setItem("directory", path.join(os.homedir(), "audios"));
-  if (!fs.existsSync(path.join(path.dirname(), "tmp"))) {
-    fs.mkdir(path.join(path.dirname(), "tmp"), (err) => {
-      err && console.log(err);
-    });
-  }
 });
 
 ipcMain.on("directoryChange", (event, dir) => {
@@ -142,6 +137,7 @@ const MP3Cutter = require("mp3-cutter");
 
 const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
 let ffmpeg = require("fluent-ffmpeg");
+const { dirname } = require("path");
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
@@ -255,8 +251,13 @@ ipcMain.on("saveFile", (event, file) => {
 
 //Saving all tracks
 
+console.log("F", __dirname);
+
 ipcMain.on("saveAllTracks", (event, data) => {
   const { tracklist, globalName } = data;
+
+  let tmpFiles = [];
+  let tmpCount = 0;
 
   console.log(tracklist);
 
@@ -283,53 +284,64 @@ ipcMain.on("saveAllTracks", (event, data) => {
         })
       );
 
-    process.toFormat("mp3").save(path.join(path.dirname(), "tmp", i, "mp3"));
-  });
+    process
+      .toFormat("mp3")
+      .save(path.join(__dirname, "tmp", i.toString() + "tmp" + ".mp3"))
+      .on("end", () => {
+        fs.readdir(path.join(__dirname, "tmp"), (err, files) => {
+          console.log("!!!", files);
+          tmpFiles = files;
+          tmpCount++;
 
-  const process = ffmpeg();
+          // End of tmp - saving
 
-  fs.readdir(path.join(path.dirname(), "tmp"), (err, files) => {
-    console.log("!!!", files);
-  });
-  // tracklist.forEach((e) => process.addInput(e.path));
+          if (tmpCount === tracklist.length) {
+            const process = ffmpeg();
 
-  const folder = localStorage.getItem("directory");
+            tmpFiles.forEach((e) =>
+              process.addInput(path.join(__dirname, "tmp", e))
+            );
 
-  process
-    .toFormat("mp3")
-    .audioFilters(
-      freqs.map((el, i) => {
-        const options = {
-          frequency: el,
-        };
+            const folder = localStorage.getItem("directory");
 
-        if (tracklist[0].filterType.includes("pass")) {
-          options.gain = tracklist[0].filterVals[i];
-        }
+            process
+              .complexFilter({ filter: "amix" })
+              .save(path.join(folder, globalName + ".mp3"))
+              .on("end", () => {
+                //cleaning
 
-        return {
-          filter: filters[tracklist[0].filterType],
-          options,
-        };
-      })
-    )
-    .complexFilter({ filter: "amix", duration: "" })
-    .save(path.join(folder, globalName + ".mp3"))
-    .on("end", () => {
-      const audios = [];
-      const folder = localStorage.getItem("directory");
-      fs.readdir(folder, (err, files) => {
-        err && console.log(err);
-        files.forEach((e) =>
-          audios.push({
-            name: path.basename(e),
-            path: path.join(folder, e),
-          })
-        );
-        event.reply("allTracksSaved", audios);
-        console.log(audios, folder);
+                fs.readdir(path.join(__dirname, "tmp"), (err, files) => {
+                  for (let file of files) {
+                    fs.unlink(
+                      path.join(path.join(__dirname, "tmp"), file),
+                      (err) => {
+                        if (err) throw err;
+                      }
+                    );
+                  }
+                });
+
+                tmpFiles = [];
+                tmpCount = 0;
+                //scan ...
+                const audios = [];
+                const folder = localStorage.getItem("directory");
+                fs.readdir(folder, (err, files) => {
+                  err && console.log(err);
+                  files.forEach((e) =>
+                    audios.push({
+                      name: path.basename(e),
+                      path: path.join(folder, e),
+                    })
+                  );
+                  event.reply("allTracksSaved", audios);
+                  console.log(audios, folder);
+                });
+              });
+          }
+        });
       });
-    });
+  });
 });
 
 // In this file you can include the rest of your app's specific main process
