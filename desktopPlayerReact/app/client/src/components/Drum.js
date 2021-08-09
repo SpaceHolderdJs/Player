@@ -10,6 +10,7 @@ export default class Drum extends Component {
       sounds: [],
       connecting: false,
       cntBtn: null,
+      soundsLinks: {},
     };
 
     this.handleLock = this.handleLock.bind(this);
@@ -20,7 +21,7 @@ export default class Drum extends Component {
 
   componentDidMount() {
     //initing buttons
-    const { btnsQuantity } = this.state;
+    const { btnsQuantity, letters, soundsLinks } = this.state;
 
     const buttons = [];
 
@@ -28,16 +29,21 @@ export default class Drum extends Component {
       buttons.push(i);
     }
 
+    letters.forEach((e) => (soundsLinks[e] = ""));
+
     this.setState({ buttons });
 
     window.addEventListener("keydown", (e) => {
-      const { isLocked } = this.state;
+      const { isLocked, soundsLinks } = this.state;
 
       if (this.btnParent) {
         const btn = [...this.btnParent.children].find(
           (el) => el.getAttribute("data-l") === e.key.toLowerCase()
         );
+
         if (btn && !isLocked) {
+          const aud = btn.querySelector("audio");
+          soundsLinks[e.key].length > 1 && aud.play();
           btn.style.boxShadow = "0px 0px 10px 5px red";
           btn.style.transform = "scale(1.1)";
         }
@@ -45,13 +51,19 @@ export default class Drum extends Component {
     });
 
     window.addEventListener("keyup", (e) => {
-      const { isLocked } = this.state;
+      const { isLocked, soundsLinks } = this.state;
 
       if (this.btnParent) {
         const btn = [...this.btnParent.children].find(
           (el) => el.getAttribute("data-l") === e.key.toLowerCase()
         );
+
         if (btn && !isLocked) {
+          const aud = btn.querySelector("audio");
+          if (soundsLinks[e.key].length > 1) {
+            aud.pause();
+            aud.currentTime = 0;
+          }
           btn.style.boxShadow = "none";
           btn.style.transform = "none";
         }
@@ -77,7 +89,7 @@ export default class Drum extends Component {
   }
 
   handleConnectSound(e) {
-    const { isLocked } = this.state;
+    const { isLocked, soundsLinks } = this.state;
     if (!isLocked) {
       this.setState({
         connecting: true,
@@ -89,8 +101,16 @@ export default class Drum extends Component {
   }
 
   render() {
-    const { btnsQuantity, buttons, letters, isLocked, connecting, cntBtn } =
-      this.state;
+    const {
+      btnsQuantity,
+      buttons,
+      letters,
+      isLocked,
+      connecting,
+      cntBtn,
+      sounds,
+      soundsLinks,
+    } = this.state;
 
     return (
       <div className="r centr Drum">
@@ -118,10 +138,15 @@ export default class Drum extends Component {
                 key={i}
                 data-l={letters[i]}
                 onClick={this.handleConnectSound}>
-                <audio />
+                <audio src={soundsLinks[letters[i]]} />
                 <span style={{ margin: "5px" }}>
                   {letters[i].toLocaleUpperCase()}
                 </span>
+                {soundsLinks[letters[i]] !== "" && (
+                  <i className="material-icons" style={{ fontSize: "15px" }}>
+                    music_note
+                  </i>
+                )}
               </div>
             ))}
           </div>
@@ -129,11 +154,13 @@ export default class Drum extends Component {
         <div className="c sounds-wrapper">
           <h6 className="r centr">
             Sounds
-            <label htmlFor="file" className="btn waves-effect btn-small label">
+            <label
+              htmlFor="sounds"
+              className="btn waves-effect btn-small label">
               <i className="material-icons">library_music</i>
             </label>
             <input
-              id="file"
+              id="sounds"
               type="file"
               webkitdirectory="true"
               multiple
@@ -143,7 +170,7 @@ export default class Drum extends Component {
             />
           </h6>
           {connecting && (
-            <span>
+            <span className="tip">
               Select sound for{" "}
               {cntBtn.getAttribute("data-l").toUpperCase() || "this"} button
               <span
@@ -155,6 +182,45 @@ export default class Drum extends Component {
               </span>
             </span>
           )}
+          {sounds.length > 0 &&
+            sounds.map((e, i) => (
+              <span key={i} className="r centr sound" data-path={e.path}>
+                {e.name}
+                <div className="r">
+                  <audio src={e.path}></audio>
+                  {soundsLinks &&
+                    Object.keys(soundsLinks)[
+                      Object.values(soundsLinks).findIndex(
+                        (el) => el === e.path
+                      )
+                    ]?.toUpperCase()}
+                  <i
+                    className="material-icons"
+                    data-path={e.path}
+                    onClick={(evt) => {
+                      const aud =
+                        evt.target.parentElement.querySelector("audio");
+                      aud.play();
+                    }}>
+                    play_arrow
+                  </i>
+
+                  {connecting && (
+                    <i
+                      className="material-icons"
+                      data-path={e.path}
+                      onClick={(evt) => {
+                        const { cntBtn, soundsLinks } = this.state;
+                        soundsLinks[cntBtn.getAttribute("data-l")] =
+                          evt.target.getAttribute("data-path");
+                        this.setState({ connecting: false, cntBtn: null });
+                      }}>
+                      add
+                    </i>
+                  )}
+                </div>
+              </span>
+            ))}
         </div>
       </div>
     );
