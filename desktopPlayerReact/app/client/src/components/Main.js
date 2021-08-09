@@ -496,8 +496,10 @@ export default class Main extends Component {
                 placeholder="Describe your problem"
                 onChange={this.handleFeedbackChange}
               />
-              <select data-name="priority">
-                <option value="" selected disabled>
+              <select
+                data-name="priority"
+                defaultValue={{ label: "high", value: 10 }}>
+                <option value="" disabled>
                   Select priority
                 </option>
                 <option value="10">High</option>

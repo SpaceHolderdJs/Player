@@ -337,15 +337,14 @@ export default class AudioEdit extends Component {
             </div>
           )}
           <select
+            defaultValue={{ label: "mp3", value: "mp3" }}
             className="browser-default tools"
             style={{
               background: `rgba(${color.r},${color.g},${color.b}, 0.7)`,
               marginRight: "5px",
             }}
             onChange={this.selectFormat}>
-            <option value="mp3" selected>
-              mp3
-            </option>
+            <option value="mp3">mp3</option>
             <option value="flac">flac</option>
             <option value="wav">wav</option>
             <option value="ogg">ogg</option>

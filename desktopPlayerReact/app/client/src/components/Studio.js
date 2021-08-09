@@ -2,6 +2,7 @@ import React, { Component } from "react";
 
 import Section from "./Section";
 import AudioEdit from "./AudioEdit";
+import Drum from "./Drum";
 
 import { Line } from "react-chartjs-2";
 
@@ -13,6 +14,7 @@ export default class Studio extends Component {
     this.state = {
       sections: ["audios", "sounds", "folder"],
       activeSection: "audios",
+      activeModule: "frq",
       files: [],
       tracklist: [],
       processingFiles: [],
@@ -33,6 +35,7 @@ export default class Studio extends Component {
 
     this.handleInitFiles = this.handleInitFiles.bind(this);
     this.setActive = this.setActive.bind(this);
+    this.setActiveModule = this.setActiveModule.bind(this);
 
     this.initProcessingFiles = this.initProcessingFiles.bind(this);
     this.deleteProcessingFile = this.deleteProcessingFile.bind(this);
@@ -123,6 +126,10 @@ export default class Studio extends Component {
   componentDidUpdate() {
     const inps = document.querySelectorAll("input[type=range]");
     window.M.Range.init(inps);
+  }
+
+  setActiveModule(e) {
+    this.setState({ activeModule: e.target.getAttribute("data-module") });
   }
 
   initAppFolderFiles(files) {
@@ -263,6 +270,7 @@ export default class Studio extends Component {
       timeLinear,
       appFolderFiles,
       process,
+      activeModule,
     } = this.state;
     console.log(files);
 
@@ -347,7 +355,7 @@ export default class Studio extends Component {
             <div className="r">
               <div className="c eqz-erapper">
                 {frequencies?.map((e, i) => (
-                  <div className="r big-wrapper">
+                  <div className="r big-wrapper" key={i}>
                     <div className="inp-wrapper" style={{ width: "350px" }}>
                       <span className="inp-subval">
                         {selectedAudio ? selectedAudio.eqvVals[i] : 0}
@@ -386,6 +394,7 @@ export default class Studio extends Component {
                 ))}
               </div>
               <select
+                defaultValue={{ label: "peaking", value: "peaking" }}
                 className="browser-default"
                 onChange={(evt) => {
                   if (selectedAudio) {
@@ -396,13 +405,15 @@ export default class Studio extends Component {
                     this.setState({ selectedAudio });
                   }
                 }}>
-                {filterTypes.map((e) =>
+                {filterTypes.map((e, i) =>
                   selectedAudio?.typeF === e ? (
-                    <option value={e} selected>
+                    <option value={e} key={i}>
                       {e}
                     </option>
                   ) : (
-                    <option value={e}>{e}</option>
+                    <option value={e} key={i}>
+                      {e}
+                    </option>
                   )
                 )}
               </select>
@@ -423,60 +434,82 @@ export default class Studio extends Component {
               </button>
             </div>
           </div>
-          <div className="block c centr" style={{ width: "500px" }}>
-            <h5 className="r centr">
-              <i className="material-icons">equalizer</i>Frequencies (hz)
-            </h5>
-            <Line
-              ref={(e) => (this.charts = e)}
-              data={{
-                labels: frequencies,
-                datasets:
-                  processingAudios && processingAudios.length > 0
-                    ? processingAudios.map((e, i) => {
-                        return {
-                          label: processingFiles[i].name,
-                          fill: true,
-                          borderColor: `rgba(${processingAudios[i].color.r},${processingAudios[i].color.g},${processingAudios[i].color.b} ,0.7)`,
-                          backgroundColor: `rgba(${
-                            processingAudios[i].color.r + 10
-                          },${processingAudios[i].color.g + 10},${
-                            processingAudios[i].color.b + 10
-                          } ,0.7)`,
-                          data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                          borderWidth: 1,
-                        };
-                      })
-                    : [
+          <div
+            className="block c centr"
+            style={{ width: "500px", padding: "10px" }}>
+            <div className="r">
+              <div
+                className="crumb c centr waves-effect"
+                onClick={this.setActiveModule}
+                data-module="frq">
+                Frequencies
+              </div>
+              <div
+                className="crumb c centr waves-effect"
+                onClick={this.setActiveModule}
+                data-module="drm">
+                Electro-drum
+              </div>
+            </div>
+            {activeModule === "frq" ? (
+              <div>
+                <h6 className="r centr">
+                  <i className="material-icons">equalizer</i>Frequencies (hz)
+                </h6>
+                <Line
+                  ref={(e) => (this.charts = e)}
+                  data={{
+                    labels: frequencies,
+                    datasets:
+                      processingAudios && processingAudios.length > 0
+                        ? processingAudios.map((e, i) => {
+                            return {
+                              label: processingFiles[i].name,
+                              fill: true,
+                              borderColor: `rgba(${processingAudios[i].color.r},${processingAudios[i].color.g},${processingAudios[i].color.b} ,0.7)`,
+                              backgroundColor: `rgba(${
+                                processingAudios[i].color.r + 10
+                              },${processingAudios[i].color.g + 10},${
+                                processingAudios[i].color.b + 10
+                              } ,0.7)`,
+                              data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                              borderWidth: 1,
+                            };
+                          })
+                        : [
+                            {
+                              label: "Dynamic frequinses",
+                              fill: true,
+                              borderColor: "teal",
+                              backgroundColor: "aqua",
+                              data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                              borderWidth: 1,
+                            },
+                          ],
+                  }}
+                  height={70}
+                  width={150}
+                  options={{
+                    responsive: true,
+                    layout: {
+                      padding: 10,
+                    },
+                    scales: {
+                      yAxes: [
                         {
-                          label: "Dynamic frequinses",
-                          fill: true,
-                          borderColor: "teal",
-                          backgroundColor: "aqua",
-                          data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                          borderWidth: 1,
+                          ticks: {
+                            beginAtZero: false,
+                          },
                         },
                       ],
-              }}
-              height={70}
-              width={150}
-              options={{
-                responsive: true,
-                layout: {
-                  padding: 10,
-                },
-                scales: {
-                  yAxes: [
-                    {
-                      ticks: {
-                        beginAtZero: false,
-                      },
                     },
-                  ],
-                },
-                maintainAspectRatio: true,
-              }}
-            />
+                    maintainAspectRatio: true,
+                  }}
+                />
+              </div>
+            ) : (
+              <Drum />
+            )}
           </div>
         </div>
         <div
@@ -505,7 +538,13 @@ export default class Studio extends Component {
                 save
               </i>
               <input
-                style={{ width: "200px", marginLeft: "10px" }}
+                style={{
+                  width: "200px",
+                  height: "20px",
+                  marginLeft: "10px",
+                  background: "linear-gradient(90deg, teal, rgba(0, 0, 0, 0))",
+                  padding: "10px",
+                }}
                 type="text"
                 placeholder="Save as..."
                 onChange={(e) => {
@@ -519,8 +558,9 @@ export default class Studio extends Component {
                 width: "6000px",
                 justifyContent: "space-between",
               }}>
-              {timeLinear?.map((e) => (
+              {timeLinear?.map((e, i) => (
                 <span
+                  key={i}
                   className="r centr"
                   style={{
                     width: "15px",

@@ -27,7 +27,7 @@ export default class Audio extends Component {
           onClick={this.handleClick}
           data-path={file.path}
           data-name={file.name}>
-          {file.name}
+          {file.name.length > 40 ? file.name.slice(0, 27) + "..." : file.name}
           {audio &&
             audio.getAttribute("data-name") &&
             audio.getAttribute("data-name") === file.name && (
