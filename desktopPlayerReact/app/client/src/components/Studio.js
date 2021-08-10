@@ -464,7 +464,7 @@ export default class Studio extends Component {
                       processingAudios && processingAudios.length > 0
                         ? processingAudios.map((e, i) => {
                             return {
-                              label: processingFiles[i].name,
+                              label: processingFiles[i]?.name,
                               fill: true,
                               borderColor: `rgba(${processingAudios[i].color.r},${processingAudios[i].color.g},${processingAudios[i].color.b} ,0.7)`,
                               backgroundColor: `rgba(${
